@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['3.2', '3.3', '3.4']
+        rails-version: ['rails-7.1', 'rails-7.2', 'rails-8.0']
+
+    name: Ruby ${{ matrix.ruby-version }} - Rails ${{ matrix.rails-version }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: false
+
+    - name: Install Node.js for asset compilation
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Build JavaScript assets
+      run: |
+        cd bard-tag
+        npm install
+        npm run build
+
+    - name: Install dependencies
+      run: bundle install
+
+    - name: Generate appraisal gemfiles
+      run: bundle exec appraisal install
+
+    - name: Run tests
+      run: bundle exec appraisal ${{ matrix.rails-version }} rspec

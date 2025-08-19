@@ -1,0 +1,15 @@
+{
+  "type": "module",
+  "scripts": {
+    "clean": "rm -f ../app/assets/javascripts/input-tag.js",
+    "build": "rollup -c"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "rollup": "^4.5.2"
+  },
+  "dependencies": {
+    "@botandrose/input-tag": "0.3.0"
+  }
+}
