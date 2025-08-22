@@ -5,6 +5,7 @@ require "action_view"
 require "active_model"
 require "bard/tag_field"
 require "equivalent-xml"
+require "ostruct"
 require "rspec/matchers"
 
 # Mock Rails application for testing

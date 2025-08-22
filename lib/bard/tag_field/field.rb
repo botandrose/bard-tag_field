@@ -10,21 +10,15 @@ module Bard
         # Store choices for render_object_values method
         @choices = choices
 
-        # Generate unique datalist ID if we have choices and no block
-        datalist_id = nil
-        if choices&.any? && !block
-          datalist_id = "#{@options[:id]}_datalist"
-          @options[:list] = datalist_id
-        end
-
         result = @template_object.content_tag("input-tag", @options) do
-          next block.call(@options) if block
-          render_object_values
-        end
+          content = block ? block.call(@options) : render_object_values
 
-        # Add datalist after input-tag if we have choices and no block
-        if choices&.any? && !block
-          result += render_datalist(datalist_id, choices)
+          # Add nested anonymous datalist if we have choices, no block, and no external list specified
+          if choices&.any? && !block && !@options[:list]
+            content += render_datalist(nil, choices)
+          end
+
+          content
         end
 
         result
@@ -33,7 +27,10 @@ module Bard
       private
 
       def render_datalist(datalist_id, choices)
-        @template_object.content_tag("datalist", id: datalist_id) do
+        # Use id attribute only if datalist_id is provided (for external datalist)
+        attributes = datalist_id ? { id: datalist_id } : {}
+
+        @template_object.content_tag("datalist", attributes) do
           choices.map do |choice|
             case choice
             when Array
