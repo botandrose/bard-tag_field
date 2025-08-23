@@ -14,6 +14,18 @@ class Chop::Form::TagField < Chop::Form::Field
   def diff_value
     get_value.join(", ")
   end
+
+  def set_value
+    if field[:multiple]
+      value.to_s.split(", ").map(&:strip)
+    else
+      value.to_s.strip
+    end
+  end
+
+  def fill_in!
+    session.execute_script("document.getElementById('#{field[:id]}').value = #{set_value.to_json}")
+  end
 end
 
 When "I fill in the {string} tag field with {string}" do |field, value|
