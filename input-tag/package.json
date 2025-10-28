@@ -11,5 +11,6 @@
   },
   "dependencies": {
     "@botandrose/input-tag": "0.4.2"
-  }
+  },
+  "packageManager": "bun@latest"
 }

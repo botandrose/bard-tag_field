@@ -155,7 +155,7 @@ The gem generates semantic HTML using custom elements:
 
 ## JavaScript Integration
 
-This gem works with the [@botandrose/input-tag](https://github.com/botandrose/input-tag) custom element. Make sure to include it in your asset pipeline:
+This gem works with the [@botandrose/input-tag](https://github.com/botandrose/input-tag) custom element.
 
 ```javascript
 // In your application.js or wherever you manage JS

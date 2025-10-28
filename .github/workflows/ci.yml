@@ -27,16 +27,14 @@ jobs:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: false
 
-    - name: Install Node.js for asset compilation
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+    - name: Install Bun for asset compilation
+      uses: oven-sh/setup-bun@v1
 
     - name: Build JavaScript assets
       run: |
-        cd bard-tag
-        npm install
-        npm run build
+        cd input-tag
+        bun install
+        bun run build
 
     - name: Install dependencies
       run: bundle install
