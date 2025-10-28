@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "form.bard_tag_field" do
+RSpec.describe "form.tag_field" do
   let(:template) { ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil) }
   let(:object) { TestModel.new }
   let(:form_builder) { ActionView::Helpers::FormBuilder.new(:test_model, object, template, {}) }
@@ -12,16 +12,16 @@ RSpec.describe "form.bard_tag_field" do
     ActionView::Helpers::FormBuilder.include Bard::TagField::FormBuilder
   end
 
-  describe "#bard_tag_field" do
+  describe "#tag_field" do
     context "basic functionality" do
       it "returns HTML-safe string" do
-        result = form_builder.bard_tag_field(:tags)
+        result = form_builder.tag_field(:tags)
         expect(result).to be_a(String)
         expect(result).to be_html_safe
       end
 
       it "generates input-tag element" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
         HTML
       end
@@ -31,7 +31,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.tags = [] }
 
       it "renders empty input-tag" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
         HTML
       end
@@ -41,7 +41,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.tags = ["ruby"] }
 
       it "renders input-tag with single tag-option" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <tag-option value="ruby">ruby</tag-option>
           </input-tag>
@@ -53,7 +53,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.tags = ["ruby", "rails", "javascript"] }
 
       it "renders input-tag with multiple tag-option elements" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <tag-option value="ruby">ruby</tag-option>
             <tag-option value="rails">rails</tag-option>
@@ -67,7 +67,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.tags = nil }
 
       it "renders empty input-tag" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
         HTML
       end
@@ -77,7 +77,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.single_tag = "single-value" }
 
       it "renders input-tag with single tag-option" do
-        expect(form_builder.bard_tag_field(:single_tag)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:single_tag)).to match_html(<<~HTML)
           <input-tag name="test_model[single_tag]" id="test_model_single_tag">
             <tag-option value="single-value">single-value</tag-option>
           </input-tag>
@@ -87,25 +87,25 @@ RSpec.describe "form.bard_tag_field" do
 
     context "with HTML options" do
       it "accepts class option" do
-        expect(form_builder.bard_tag_field(:tags, class: "custom-class")).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, class: "custom-class")).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags" class="custom-class"></input-tag>
         HTML
       end
 
       it "accepts id option" do
-        expect(form_builder.bard_tag_field(:tags, id: "custom-id")).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, id: "custom-id")).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="custom-id"></input-tag>
         HTML
       end
 
       it "accepts data attributes" do
-        expect(form_builder.bard_tag_field(:tags, data: { custom: "value" })).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, data: { custom: "value" })).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags" data-custom="value"></input-tag>
         HTML
       end
 
       it "accepts multiple HTML options" do
-        expect(form_builder.bard_tag_field(:tags,
+        expect(form_builder.tag_field(:tags,
           class: "form-control",
           id: "tag-field",
           data: { toggle: "tags" }
@@ -120,7 +120,7 @@ RSpec.describe "form.bard_tag_field" do
         block_called = false
         options_passed = nil
 
-        form_builder.bard_tag_field(:tags) do |opts|
+        form_builder.tag_field(:tags) do |opts|
           block_called = true
           options_passed = opts
           "<custom-content></custom-content>".html_safe
@@ -131,7 +131,7 @@ RSpec.describe "form.bard_tag_field" do
       end
 
       it "uses block return value as content" do
-        expect(form_builder.bard_tag_field(:tags) do |opts|
+        expect(form_builder.tag_field(:tags) do |opts|
           "<custom-block-content></custom-block-content>".html_safe
         end).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
@@ -143,13 +143,13 @@ RSpec.describe "form.bard_tag_field" do
 
     context "name and id generation" do
       it "generates correct name attribute" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
         HTML
       end
 
       it "generates correct id attribute" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
         HTML
       end
@@ -158,7 +158,7 @@ RSpec.describe "form.bard_tag_field" do
         custom_builder = ActionView::Helpers::FormBuilder.new(:custom_model, object, template, {})
         custom_builder.extend(Bard::TagField::FormBuilder)
 
-        expect(custom_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(custom_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="custom_model[tags]" id="custom_model_tags"></input-tag>
         HTML
       end
@@ -168,7 +168,7 @@ RSpec.describe "form.bard_tag_field" do
       before { object.tags = ["<script>alert('xss')</script>", "safe&tag"] }
 
       it "properly escapes tag values" do
-        expect(form_builder.bard_tag_field(:tags)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <tag-option value="&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;">&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</tag-option>
             <tag-option value="safe&amp;tag">safe&amp;tag</tag-option>
@@ -177,7 +177,7 @@ RSpec.describe "form.bard_tag_field" do
       end
 
       it "properly escapes option values" do
-        expect(form_builder.bard_tag_field(:tags, class: "<script>")).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, class: "<script>")).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags" class="&lt;script&gt;">
             <tag-option value="&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;">&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</tag-option>
             <tag-option value="safe&amp;tag">safe&amp;tag</tag-option>
@@ -191,7 +191,7 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { ["ruby", "rails", "javascript"] }
 
         it "renders nested anonymous datalist with option elements from choices array" do
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <datalist>
                 <option value="ruby">ruby</option>
@@ -203,7 +203,7 @@ RSpec.describe "form.bard_tag_field" do
         end
 
         it "does not add list attribute when using nested datalist" do
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <datalist>
                 <option value="ruby">ruby</option>
@@ -216,7 +216,7 @@ RSpec.describe "form.bard_tag_field" do
 
         it "renders current object values as tag-option elements with nested datalist" do
           object.tags = ["rails"]
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <tag-option value="rails">rails</tag-option>
               <datalist>
@@ -233,7 +233,7 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { [["Ruby Programming", "ruby"], ["Ruby on Rails", "rails"], ["JavaScript", "js"]] }
 
         it "renders nested datalist with correct display and submit values" do
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <datalist>
                 <option value="ruby">Ruby Programming</option>
@@ -246,7 +246,7 @@ RSpec.describe "form.bard_tag_field" do
 
         it "renders current object values as tag-option elements with corresponding display labels" do
           object.tags = ["rails", "js"]
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <tag-option value="rails">Ruby on Rails</tag-option>
               <tag-option value="js">JavaScript</tag-option>
@@ -264,7 +264,7 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { ["plain", ["Display Text", "value"], "another_plain"] }
 
         it "handles mixed array and string choices in nested datalist" do
-          expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
               <datalist>
                 <option value="plain">plain</option>
@@ -280,7 +280,7 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { [["Ruby", "ruby"], ["Rails", "rails"]] }
 
         it "accepts choices with HTML options" do
-          expect(form_builder.bard_tag_field(:tags, choices, class: "custom-class")).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices, class: "custom-class")).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags" class="custom-class">
               <datalist>
                 <option value="ruby">Ruby</option>
@@ -293,13 +293,13 @@ RSpec.describe "form.bard_tag_field" do
 
       context "with empty choices" do
         it "renders empty input-tag with empty array" do
-          expect(form_builder.bard_tag_field(:tags, [])).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, [])).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
           HTML
         end
 
         it "renders empty input-tag with nil choices" do
-          expect(form_builder.bard_tag_field(:tags, nil)).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, nil)).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
           HTML
         end
@@ -309,13 +309,13 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { ["ruby", "rails", "javascript"] }
 
         it "uses external datalist when list option is provided" do
-          expect(form_builder.bard_tag_field(:tags, choices, list: "external_datalist")).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices, list: "external_datalist")).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags" list="external_datalist"></input-tag>
           HTML
         end
 
         it "does not generate nested datalist when external list is specified" do
-          expect(form_builder.bard_tag_field(:tags, choices, list: "external_datalist")).to match_html(<<~HTML)
+          expect(form_builder.tag_field(:tags, choices, list: "external_datalist")).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags" list="external_datalist"></input-tag>
           HTML
         end
@@ -325,7 +325,7 @@ RSpec.describe "form.bard_tag_field" do
         let(:choices) { [["Ruby", "ruby"], ["Rails", "rails"]] }
 
         it "calls block instead of using choices when block provided" do
-          expect(form_builder.bard_tag_field(:tags, choices) do |opts|
+          expect(form_builder.tag_field(:tags, choices) do |opts|
             "<custom-block-content></custom-block-content>".html_safe
           end).to match_html(<<~HTML)
             <input-tag name="test_model[tags]" id="test_model_tags">
@@ -340,19 +340,19 @@ RSpec.describe "form.bard_tag_field" do
       it "accepts similar method signature with choices" do
         # Should work like: form.select(:tags, choices, options, html_options)
         expect {
-          form_builder.bard_tag_field(:tags, ["ruby", "rails"], { class: "form-control" })
+          form_builder.tag_field(:tags, ["ruby", "rails"], { class: "form-control" })
         }.not_to raise_error
       end
 
       it "accepts nested array choices like form.select" do
         expect {
-          form_builder.bard_tag_field(:tags, [["Ruby", "ruby"], ["Rails", "rails"]])
+          form_builder.tag_field(:tags, [["Ruby", "ruby"], ["Rails", "rails"]])
         }.not_to raise_error
       end
 
       it "accepts block like form.select" do
         expect {
-          form_builder.bard_tag_field(:tags) do |opts|
+          form_builder.tag_field(:tags) do |opts|
             "<custom-content></custom-content>".html_safe
           end
         }.not_to raise_error
@@ -362,7 +362,7 @@ RSpec.describe "form.bard_tag_field" do
     context "edge cases with choices" do
       it "handles choices with HTML characters in display text" do
         choices = [["<Ruby> & Rails", "ruby_rails"], ["C++", "cpp"]]
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="ruby_rails">&lt;Ruby&gt; &amp; Rails</option>
@@ -374,7 +374,7 @@ RSpec.describe "form.bard_tag_field" do
 
       it "handles choices with special characters in values" do
         choices = [["Ruby", "ruby-lang"], ["C#", "c_sharp"], ["Node.js", "node.js"]]
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="ruby-lang">Ruby</option>
@@ -388,7 +388,7 @@ RSpec.describe "form.bard_tag_field" do
       it "handles nested arrays with more than 2 elements" do
         # Should only use first 2 elements [display, value] and ignore the rest
         choices = [["Display", "value", "extra", "ignored"]]
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="value">Display</option>
@@ -399,7 +399,7 @@ RSpec.describe "form.bard_tag_field" do
 
       it "handles deeply nested arrays gracefully" do
         choices = [["Top Level", ["nested", "ignored"]]]
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="nested ignored">Top Level</option>
@@ -410,7 +410,7 @@ RSpec.describe "form.bard_tag_field" do
 
       it "renders object values as tag-options when choices provided but empty" do
         object.tags = ["existing", "tags"]
-        expect(form_builder.bard_tag_field(:tags, [])).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, [])).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <tag-option value="existing">existing</tag-option>
             <tag-option value="tags">tags</tag-option>

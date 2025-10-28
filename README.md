@@ -4,7 +4,7 @@
 [![Ruby](https://img.shields.io/badge/ruby-3.2%2B-red)](https://www.ruby-lang.org)
 [![Rails](https://img.shields.io/badge/rails-7.1%2B-red)](https://rubyonrails.org)
 
-A Rails form helper gem that adds `bard_tag_field` to your forms, creating interactive tag input fields using the [@botandrose/input-tag](https://github.com/botandrose/input-tag) custom element.
+A Rails form helper gem that adds `tag_field` to your forms, creating interactive tag input fields using the [@botandrose/input-tag](https://github.com/botandrose/input-tag) custom element.
 
 Perfect for adding tag functionality to your Rails forms with a clean, modern interface that works seamlessly with your existing Rails form helpers.
 
@@ -22,11 +22,11 @@ Perfect for adding tag functionality to your Rails forms with a clean, modern in
 
 ### Basic Usage
 
-After installing and requiring the gem, Use `bard_tag_field` in your Rails forms just like any other form helper:
+After installing and requiring the gem, Use `tag_field` in your Rails forms just like any other form helper:
 
 ```erb
 <%= form_with model: @post do |form| %>
-  <%= form.bard_tag_field :tags %>
+  <%= form.tag_field :tags %>
 <% end %>
 ```
 
@@ -37,7 +37,7 @@ This generates an interactive tag field that binds to your model's `tags` attrib
 Add CSS classes, data attributes, and other HTML options:
 
 ```erb
-<%= form.bard_tag_field :tags,
+<%= form.tag_field :tags,
     class: "form-control",
     id: "post-tags",
     data: { placeholder: "Add tags..." } %>
@@ -54,7 +54,7 @@ The field automatically displays existing tags from your model:
 
 ```erb
 <!-- Tags will be pre-populated in the form -->
-<%= form.bard_tag_field :tags %>
+<%= form.tag_field :tags %>
 ```
 
 ### With Predefined Choices (Rails select-style)
@@ -62,13 +62,13 @@ The field automatically displays existing tags from your model:
 Like `form.select`, you can provide predefined choices for users to select from:
 
 ```erb
-<%= form.bard_tag_field :tags, ["ruby", "rails", "javascript", "css"] %>
+<%= form.tag_field :tags, ["ruby", "rails", "javascript", "css"] %>
 ```
 
 Or use nested arrays for display vs submit values:
 
 ```erb
-<%= form.bard_tag_field :categories, [
+<%= form.tag_field :categories, [
   ["Web Development", "web-dev"],
   ["Machine Learning", "ml"],
   ["Database Design", "db"]
@@ -82,7 +82,7 @@ This creates a datalist with available options while still showing current objec
 Use blocks for custom tag rendering:
 
 ```erb
-<%= form.bard_tag_field :tags do |options| %>
+<%= form.tag_field :tags do |options| %>
   <% @post.tags.each do |tag| %>
     <tag-option value="<%= tag %>" class="custom-tag"><%= tag %></tag-option>
   <% end %>
@@ -128,7 +128,7 @@ end
 ```
 
 ```erb
-<%= form.bard_tag_field :tags_array %>
+<%= form.tag_field :tags_array %>
 ```
 
 ## Generated HTML
@@ -176,7 +176,7 @@ Or include the precompiled asset (automatically added by this gem):
 
 ## API Reference
 
-### `bard_tag_field(method, choices = nil, options = {}, html_options = {}, &block)`
+### `tag_field(method, choices = nil, options = {}, html_options = {}, &block)`
 
 **Parameters:**
 - `method` - The attribute name (symbol)
@@ -190,19 +190,19 @@ Or include the precompiled asset (automatically added by this gem):
 **Examples:**
 ```ruby
 # Basic usage
-form.bard_tag_field :tags
+form.tag_field :tags
 
 # With choices
-form.bard_tag_field :tags, ["ruby", "rails", "javascript"]
+form.tag_field :tags, ["ruby", "rails", "javascript"]
 
 # With nested choices (display vs value)
-form.bard_tag_field :categories, [["Web Dev", "web"], ["ML", "ml"]]
+form.tag_field :categories, [["Web Dev", "web"], ["ML", "ml"]]
 
 # With HTML options
-form.bard_tag_field :tags, class: "form-control", data: { max_tags: 5 }
+form.tag_field :tags, class: "form-control", data: { max_tags: 5 }
 
 # With choices and HTML options
-form.bard_tag_field :tags, ["ruby", "rails"], {}, { class: "form-control" }
+form.tag_field :tags, ["ruby", "rails"], {}, { class: "form-control" }
 ```
 
 ## Development

@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe "bard_tag_field autocomplete with value/label separation" do
+RSpec.describe "tag_field autocomplete with value/label separation" do
   let(:template) { ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil) }
   let(:object) { TestModel.new }
   let(:form_builder) { ActionView::Helpers::FormBuilder.new(:test_model, object, template, {}) }
@@ -18,7 +18,7 @@ RSpec.describe "bard_tag_field autocomplete with value/label separation" do
       before { object.tags = [] }
 
       it "connects input-tag to datalist properly" do
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="js">JavaScript Framework</option>
@@ -34,7 +34,7 @@ RSpec.describe "bard_tag_field autocomplete with value/label separation" do
       let(:choices) { ["plain", ["Display Label", "value"], "another"] }
 
       it "generates correct datalist options for mixed types" do
-        expect(form_builder.bard_tag_field(:tags, choices)).to match_html(<<~HTML)
+        expect(form_builder.tag_field(:tags, choices)).to match_html(<<~HTML)
           <input-tag name="test_model[tags]" id="test_model_tags">
             <datalist>
               <option value="plain">plain</option>

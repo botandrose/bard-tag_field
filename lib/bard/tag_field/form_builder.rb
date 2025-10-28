@@ -3,19 +3,19 @@ require_relative "field"
 module Bard
   module TagField
     module FormBuilder
-      def bard_tag_field method, choices = nil, options = {}, html_options = {}, &block
+      def tag_field method, choices = nil, options = {}, html_options = {}, &block
         # Handle different method signatures to match Rails select helper
         case choices
         when Hash
-          # bard_tag_field(:method, { class: "form-control" })
+          # tag_field(:method, { class: "form-control" })
           html_options = options
           options = choices
           choices = nil
         when Array
-          # bard_tag_field(:method, choices_array, { class: "form-control" })
+          # tag_field(:method, choices_array, { class: "form-control" })
           html_options = options if options.is_a?(Hash)
         when NilClass
-          # bard_tag_field(:method)
+          # tag_field(:method)
           html_options = options
           options = {}
         end

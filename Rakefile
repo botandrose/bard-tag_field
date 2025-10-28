@@ -9,10 +9,10 @@ task default: :spec
 
 desc "Build JavaScript assets"
 task :build_js do
-  sh "cd bard-tag && npm run build"
+  sh "cd input-tag && npm run build"
 end
 
 desc "Install npm dependencies"
 task :install_deps do
-  sh "cd bard-tag && npm install"
+  sh "cd input-tag && npm install"
 end
