@@ -2,10 +2,11 @@ module Bard
   module TagField
     class Field < ActionView::Helpers::Tags::TextField
       def render &block
+        @options = @options.dup.transform_keys(&:to_s)
         add_default_name_and_id(@options)
 
         # Remove choices from HTML options before rendering
-        choices = @options.delete(:choices)
+        choices = @options.delete("choices")
 
         # Store choices for render_object_values method
         @choices = choices
@@ -14,7 +15,7 @@ module Bard
           content = block ? block.call(@options) : render_object_values
 
           # Add nested anonymous datalist if we have choices, no block, and no external list specified
-          if choices&.any? && !block && !@options[:list]
+          if choices&.any? && !block && !@options["list"]
             content += render_datalist(nil, choices)
           end
 

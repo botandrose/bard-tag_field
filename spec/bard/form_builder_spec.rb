@@ -359,6 +359,43 @@ RSpec.describe "form.tag_field" do
       end
     end
 
+    context "with multiple attribute" do
+      it "appends [] to name attribute for Rails array parameter handling" do
+        expect(form_builder.tag_field(:tags, multiple: true)).to match_html(<<~HTML)
+          <input-tag name="test_model[tags][]" id="test_model_tags" multiple="multiple"></input-tag>
+        HTML
+      end
+
+      it "appends [] to name with existing tags" do
+        object.tags = ["ruby", "rails"]
+        expect(form_builder.tag_field(:tags, multiple: true)).to match_html(<<~HTML)
+          <input-tag name="test_model[tags][]" id="test_model_tags" multiple="multiple">
+            <tag-option value="ruby">ruby</tag-option>
+            <tag-option value="rails">rails</tag-option>
+          </input-tag>
+        HTML
+      end
+
+      it "appends [] to name with choices" do
+        choices = ["ruby", "rails", "javascript"]
+        expect(form_builder.tag_field(:tags, choices, multiple: true)).to match_html(<<~HTML)
+          <input-tag name="test_model[tags][]" id="test_model_tags" multiple="multiple">
+            <datalist>
+              <option value="ruby">ruby</option>
+              <option value="rails">rails</option>
+              <option value="javascript">javascript</option>
+            </datalist>
+          </input-tag>
+        HTML
+      end
+
+      it "does not append [] when multiple is not set" do
+        expect(form_builder.tag_field(:tags)).to match_html(<<~HTML)
+          <input-tag name="test_model[tags]" id="test_model_tags"></input-tag>
+        HTML
+      end
+    end
+
     context "edge cases with choices" do
       it "handles choices with HTML characters in display text" do
         choices = [["<Ruby> & Rails", "ruby_rails"], ["C++", "cpp"]]
