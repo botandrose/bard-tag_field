@@ -14,7 +14,7 @@ task :build_js do
   sh "cd input-tag && bun run build"
 end
 
-desc "Install Bun dependencies"
+desc "Install bun dependencies"
 task :install_deps do
   sh "cd input-tag && bun install"
 end

@@ -10,8 +10,8 @@ This is a Rails form helper gem that provides `tag_field` for creating interacti
 - `lib/bard/tag_field/form_builder.rb` - Rails form builder integration that handles method signature variants (like Rails' `select` helper)
 - `lib/bard/tag_field/field.rb` - Core field rendering logic, extends `ActionView::Helpers::Tags::TextField`
 - `lib/bard/tag_field.rb` - Rails Engine that auto-registers the form builder and precompiles JavaScript assets
-- `input-tag/` - JavaScript build directory using Rollup to bundle the `@botandrose/input-tag` package with Bun
-- `app/assets/javascripts/input-tag.js` - Compiled JavaScript output for Rails asset pipeline
+- `input-tag/` - The @botandrose/input-tag custom element source (standalone package)
+- `app/assets/javascripts/input-tag.js` - Symlink to `input-tag/dist/input-tag.js` for Rails asset pipeline
 
 ## Development Commands
 
@@ -34,7 +34,7 @@ bundle exec appraisal install
 # Build JavaScript assets (required before running tests or releasing)
 cd input-tag && bun run build
 
-# Install Bun dependencies
+# Install bun dependencies
 cd input-tag && bun install
 
 # Clean compiled assets
@@ -96,13 +96,14 @@ Test setup includes a mock Rails application (TestApp) initialized in spec/spec_
 
 ## JavaScript Build Process
 
-The gem bundles the `@botandrose/input-tag` package using Rollup with Bun:
-1. Source: `input-tag/index.js` imports from `@botandrose/input-tag`
+The `input-tag/` directory contains the standalone @botandrose/input-tag custom element:
+1. Source: `input-tag/src/input-tag.js`
 2. Build: `cd input-tag && bun run build` runs Rollup
-3. Output: `app/assets/javascripts/input-tag.js` for Rails asset pipeline
-4. The Engine precompiles this asset (lib/bard/tag_field.rb:11)
+3. Output: `input-tag/dist/input-tag.js` (bundled with dependencies)
+4. Symlink: `app/assets/javascripts/input-tag.js` -> `../../../input-tag/dist/input-tag.js`
+5. The Engine precompiles this asset (lib/bard/tag_field.rb:11)
 
-**Important:** Always rebuild JavaScript assets after updating the `@botandrose/input-tag` dependency.
+**Important:** Run `cd input-tag && bun run build` after making changes to input-tag source.
 
 ## Multi-Rails Version Support
 

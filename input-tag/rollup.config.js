@@ -1,12 +1,12 @@
 import resolve from "@rollup/plugin-node-resolve"
-import commonjs from '@rollup/plugin-commonjs';
+import commonjs from "@rollup/plugin-commonjs"
 
 export default [
   {
-    input: "./index.js",
+    input: "./src/input-tag.js",
     output: [
       {
-        file: "../app/assets/javascripts/input-tag.js",
+        file: "dist/input-tag.js",
         format: "es",
       },
     ],

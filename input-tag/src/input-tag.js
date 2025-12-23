@@ -1,0 +1,863 @@
+import Taggle from "./taggle.js"
+import autocomplete from "autocompleter"
+
+
+class TagOption extends HTMLElement {
+  constructor() {
+    super();
+    this._shadowRoot = this.attachShadow({ mode: "open" });
+  }
+
+  connectedCallback() {
+    this._shadowRoot.innerHTML = `
+      <style>
+        :host {
+          background: #588a00;
+          padding: 3px 10px 3px 10px !important;
+          margin-right: 4px !important;
+          margin-bottom: 2px !important;
+          display: inline-flex;
+          align-items: center;
+          float: none;
+          font-size: 14px;
+          line-height: 1;
+          min-height: 32px;
+          color: #fff;
+          text-transform: none;
+          border-radius: 3px;
+          position: relative;
+          cursor: pointer;
+        }
+        button {
+          z-index: 1;
+          border: none;
+          background: none;
+          font-size: 20px;
+          display: inline-block;
+          color: rgba(255, 255, 255, 0.6);
+          right: 10px;
+          height: 100%;
+          cursor: pointer;
+        }
+      </style>
+      <slot></slot>
+      <button type="button">×</button>
+    `;
+
+    this.buttonTarget = this._shadowRoot.querySelector("button")
+    this.buttonTarget.onclick = event => {
+      this.parentNode._taggle._remove(this, event)
+    }
+  }
+
+  get value() {
+    return this.getAttribute("value") || this.innerText
+  }
+
+  get label() {
+    return this.innerText
+  }
+}
+customElements.define("tag-option", TagOption);
+
+
+class InputTag extends HTMLElement {
+  static get formAssociated() {
+    return true;
+  }
+
+  static get observedAttributes() {
+    return ['name', 'multiple', 'required', 'list'];
+  }
+
+  constructor() {
+    super();
+    this._internals = this.attachInternals();
+    this._shadowRoot = this.attachShadow({ mode: "open" });
+
+    this.observer = new MutationObserver(mutations => {
+      let needsTagOptionsUpdate = false;
+      let needsAutocompleteUpdate = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          const addedRemovedNodes = [...mutation.addedNodes, ...mutation.removedNodes]
+          if (addedRemovedNodes.some(node => node.tagName === 'TAG-OPTION')) {
+            needsTagOptionsUpdate = true;
+          }
+          if (addedRemovedNodes.some(node => node.tagName === 'DATALIST')) {
+            needsAutocompleteUpdate = true;
+          }
+        } else if (mutation.type === 'attributes') {
+          // Handle attribute changes on tag-option elements
+          if (mutation.target !== this && mutation.target.tagName === 'TAG-OPTION') {
+            needsTagOptionsUpdate = true;
+          }
+        }
+      }
+
+      if (needsTagOptionsUpdate || needsAutocompleteUpdate) {
+        this.unobserve();
+        if (needsTagOptionsUpdate) {
+          this.processTagOptions();
+        }
+        if (needsAutocompleteUpdate && this.initialized) {
+          this.setupAutocomplete();
+        }
+        this.observe();
+      }
+    });
+  }
+
+  unobserve() {
+    this.observer.disconnect();
+  }
+
+  observe() {
+    this.observer.observe(this, {
+      childList: true,
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["value"],
+    });
+  }
+
+  processTagOptions() {
+    if(!this._taggle || !this._taggle.tag) return
+    let tagOptions = Array.from(this.children).filter(e => e.tagName === 'TAG-OPTION')
+    let values = tagOptions.map(e => e.value).filter(value => value !== null && value !== undefined)
+
+    // Enforce maxTags constraint for single mode
+    if (!this.multiple && values.length > 1) {
+      // Remove excess tag-options from DOM (keep only the first one)
+      tagOptions.slice(1).forEach(el => el.remove())
+      tagOptions = tagOptions.slice(0, 1)
+      values = values.slice(0, 1)
+    }
+
+    this._taggle.tag.elements = tagOptions
+    this._taggle.tag.values = values
+    this._inputPosition = this._taggle.tag.values.length;
+
+    // Update the taggle display elements to match the current values
+    const taggleElements = this._taggle.tag.elements;
+    taggleElements.forEach((element, index) => {
+      if (element && element.setAttribute) {
+        element.setAttribute('data-value', values[index]);
+      }
+    });
+
+    // Update internal value to match
+    this.updateValue();
+
+    // Ensure input visibility is updated when tags change via DOM
+    this.updateInputVisibility();
+  }
+
+  get form() {
+    return this._internals.form;
+  }
+
+  get name() {
+    return this.getAttribute("name");
+  }
+
+  get multiple() {
+    return this.hasAttribute('multiple');
+  }
+
+  get value() {
+    const internalValue = this._internals.value;
+    if (this.multiple) {
+      return internalValue; // Return array for multiple mode
+    } else {
+      return internalValue.length > 0 ? internalValue[0] : ''; // Return string for single mode
+    }
+  }
+
+  set value(input) {
+    // Convert input to array format for internal storage
+    let values;
+    if (Array.isArray(input)) {
+      values = input;
+    } else if (typeof input === 'string') {
+      values = input === '' ? [] : [input];
+    } else {
+      values = [];
+    }
+
+    const oldValues = this._internals.value;
+    this._internals.value = values;
+
+    const formData = new FormData();
+    values.forEach(value => formData.append(this.name, value));
+    // For single mode, append empty string when no values (like standard HTML inputs)
+    // For multiple mode, leave empty (like standard HTML multiple selects)
+    if (values.length === 0 && !this.multiple) {
+      formData.append(this.name, "");
+    }
+    this._internals.setFormValue(formData);
+
+    // Update taggle to match the new values
+    if (this._taggle && this.initialized) {
+      this.suppressEvents = true; // Prevent infinite loops
+      this._taggle.removeAll();
+      if (values.length > 0) {
+        this._taggle.add(values);
+      }
+      this.suppressEvents = false;
+    }
+
+    if(this.initialized && !this.suppressEvents && JSON.stringify(oldValues) !== JSON.stringify(values)) {
+      this.dispatchEvent(new CustomEvent("change", {
+        bubbles: true,
+        composed: true,
+      }));
+    }
+  }
+
+  reset() {
+    this._taggle.removeAll()
+    this._taggleInputTarget.value = ''
+  }
+
+  get options() {
+    const datalistId = this.getAttribute("list")
+    if(datalistId) {
+      const datalist = document.getElementById(datalistId)
+      if(datalist) {
+        return [...datalist.options].map(option => option.value).filter(value => value !== null && value !== undefined)
+      }
+    }
+
+    // Fall back to nested datalist
+    const nestedDatalist = this.querySelector('datalist')
+    if(nestedDatalist) {
+      return [...nestedDatalist.options].map(option => option.hasAttribute('value') ? option.value : option.textContent).filter(value => value !== null && value !== undefined)
+    }
+
+    return []
+  }
+
+  _getOptionsWithLabels() {
+    const datalistId = this.getAttribute("list")
+    if(datalistId) {
+      const datalist = document.getElementById(datalistId)
+      if(datalist) {
+        return [...datalist.options].map(option => ({
+          value: option.value,
+          label: option.textContent || option.value
+        })).filter(item => item.value !== null && item.value !== undefined)
+      }
+    }
+
+    // Fall back to nested datalist
+    const nestedDatalist = this.querySelector('datalist')
+    if(nestedDatalist) {
+      return [...nestedDatalist.options].map(option => ({
+        value: option.hasAttribute('value') ? option.value : option.textContent,
+        label: option.textContent || option.value
+      })).filter(item => item.value !== null && item.value !== undefined)
+    }
+
+    return []
+  }
+
+  async connectedCallback() {
+    this.setAttribute('tabindex', '0');
+    this.addEventListener("focus", e => this.focus(e));
+
+    // Wait for child tag-option elements to be fully connected
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    this._shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; }
+        :host *{
+          position: relative;
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        #container {
+          background: rgba(255, 255, 255, 0.8);
+          padding: 6px 6px 3px;
+          max-height: none;
+          display: flex;
+          margin: 0;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          min-height: 48px;
+          line-height: 48px;
+          width: 100%;
+          border: 1px solid #d0d0d0;
+          outline: 1px solid transparent;
+          box-shadow: #ccc 0 1px 4px 0 inset;
+          border-radius: 2px;
+          cursor: text;
+          color: #333;
+          list-style: none;
+          padding-right: 32px;
+        }
+        input {
+          display: block;
+          height: 38px;
+          float: none;
+          margin: 0;
+          padding-left: 10px !important;
+          padding-right: 30px !important;
+          width: auto !important;
+          min-width: 70px;
+          font-size: 14px;
+          width: 100%;
+          line-height: 2;
+          padding: 0 0 0 10px;
+          border: 1px dashed #d0d0d0;
+          outline: 1px solid transparent;
+          background: #fff;
+          box-shadow: none;
+          border-radius: 2px;
+          cursor: text;
+          color: #333;
+        }
+        button {
+          width: 38px;
+          text-align: center;
+          line-height: 36px;
+          border: 1px solid #e0e0e0;
+          font-size: 20px;
+          color: #666;
+          position: absolute !important;
+          z-index: 10;
+          right: 0px;
+          top: 0;
+          font-weight: 400;
+          cursor: pointer;
+          background: none;
+        }
+        .taggle_sizer{
+          padding: 0;
+          margin: 0;
+          position: absolute;
+          top: -500px;
+          z-index: -1;
+          visibility: hidden;
+        }
+        .ui-autocomplete{
+          position: static !important;
+          width: 100% !important;
+          margin-top: 2px;
+        }
+        .ui-menu{
+          margin: 0;
+          padding: 6px;
+          box-shadow: #ccc 0 1px 6px;
+          z-index: 2;
+          display: flex;
+          flex-wrap: wrap;
+          background: #fff;
+          list-style: none;
+          font-size: 14px;
+          min-width: 200px;
+        }
+        .ui-menu .ui-menu-item{
+          display: inline-block;
+          margin: 0 0 2px;
+          line-height: 30px;
+          border: none;
+          padding: 0 10px;
+          text-indent: 0;
+          border-radius: 2px;
+          width: auto;
+          cursor: pointer;
+          color: #555;
+        }
+        .ui-menu .ui-menu-item::before{ display: none; }
+        .ui-menu .ui-menu-item:hover{ background: #e0e0e0; }
+        .ui-state-active{
+          padding: 0;
+          border: none;
+          background: none;
+          color: inherit;
+        }
+      </style>
+      <div style="position: relative;">
+        <div id="container">
+          <slot></slot>
+        </div>
+        <input
+          id="inputTarget"
+          type="hidden"
+          name="${this.name}"
+        />
+      </div>
+    `;
+
+    this.form?.addEventListener("reset", this.reset.bind(this));
+
+    this.containerTarget = this.shadowRoot.querySelector("#container");
+    this.inputTarget = this.shadowRoot.querySelector("#inputTarget");
+
+    this.required = this.hasAttribute("required")
+
+    const maxTags = this.multiple ? undefined : 1
+    const placeholder = this.inputTarget.getAttribute("placeholder")
+
+    this.inputTarget.value = ""
+    this.inputTarget.id = ""
+
+    this._taggle = new Taggle(this, {
+      inputContainer: this.containerTarget,
+      preserveCase: true,
+      hiddenInputName: this.name,
+      maxTags: maxTags,
+      placeholder: placeholder,
+      onTagAdd: (event, tag) => this.onTagAdd(event, tag),
+      onTagRemove: (event, tag) => this.onTagRemove(event, tag),
+    })
+    this._taggleInputTarget = this._taggle.getInput()
+    this._taggleInputTarget.id = this.id
+    this._taggleInputTarget.autocomplete = "off"
+    this._taggleInputTarget.setAttribute("data-turbo-permanent", true)
+    this._taggleInputTarget.addEventListener("keyup", e => this.keyup(e))
+
+    // Set initial value after taggle is initialized
+    this.value = this._taggle.getTagValues()
+
+    this.checkRequired()
+
+    this.buttonTarget = h(`<button class="add">+</button>`)
+    this.buttonTarget.addEventListener("click", e => this._add(e))
+    this._taggleInputTarget.insertAdjacentElement("afterend", this.buttonTarget)
+
+    this.autocompleteContainerTarget = h(`<ul>`);
+    // Insert autocomplete container into the positioned wrapper div
+    const wrapperDiv = this.shadowRoot.querySelector('div[style*="position: relative"]');
+    wrapperDiv.appendChild(this.autocompleteContainerTarget)
+
+    this.setupAutocomplete()
+
+    this.observe() // Start observing after taggle is set up
+    this.initialized = true
+
+    // Update visibility based on current state
+    this.updateInputVisibility()
+  }
+
+  setupAutocomplete() {
+    const optionsWithLabels = this._getOptionsWithLabels()
+
+    autocomplete({
+      input: this._taggleInputTarget,
+      container: this.autocompleteContainerTarget,
+      className: "ui-menu ui-autocomplete",
+      fetch: (text, update) => {
+        const currentTags = this._taggle.getTagValues()
+        const suggestions = optionsWithLabels.filter(option =>
+          option.label.toLowerCase().includes(text.toLowerCase()) &&
+          !currentTags.includes(option.value)
+        )
+        // Store the suggestions for testing (can't assign to getter, tests read from DOM)
+        update(suggestions)
+      },
+      render: item => h(`<li class="ui-menu-item" data-value="${item.value}">${item.label}</li>`),
+      onSelect: item => {
+        // Prevent adding multiple tags in single mode
+        if (!this.multiple && this._taggle.getTagValues().length > 0) {
+          this._taggleInputTarget.value = ''
+          return
+        }
+
+        // Create a tag-option element with proper value/label separation
+        const tagOption = document.createElement('tag-option')
+        tagOption.setAttribute('value', item.value)
+        tagOption.textContent = item.label
+        this.appendChild(tagOption)
+
+        // Clear input
+        this._taggleInputTarget.value = ''
+      },
+      minLength: 1,
+      customize: (input, inputRect, container, maxHeight) => {
+        // Position autocomplete below the input-tag container, accounting for dynamic height
+        this._updateAutocompletePosition(container);
+
+        // Store reference to update positioning when container height changes
+        this._autocompleteContainer = container;
+      }
+    })
+  }
+
+  disconnectedCallback() {
+    this.form?.removeEventListener("reset", this.reset.bind(this));
+    this.unobserve();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (oldValue === newValue) return;
+
+    // Only handle changes after the component is connected and initialized
+    if (!this._taggle) return;
+
+    switch (name) {
+      case 'name':
+        this.handleNameChange(newValue);
+        break;
+      case 'multiple':
+        this.handleMultipleChange(newValue !== null);
+        break;
+      case 'required':
+        this.handleRequiredChange(newValue !== null);
+        break;
+      case 'list':
+        this.handleListChange(newValue);
+        break;
+    }
+  }
+
+  checkRequired() {
+    const flag = this.required && this._taggle.getTagValues().length == 0
+    this._taggleInputTarget.required = flag
+
+    // Update ElementInternals validity to match internal input
+    if (flag) {
+      this._internals.setValidity({ valueMissing: true }, 'Please fill out this field.', this._taggleInputTarget)
+    } else {
+      this._internals.setValidity({})
+    }
+  }
+
+  // monkeypatch support for android comma
+  keyup(event) {
+    const key = event.which || event.keyCode
+    const normalKeyboard = key != 229
+    if(normalKeyboard) return
+    const value = this._taggleInputTarget.value
+
+    // backspace
+    if(value.length == 0) {
+      const values = this._taggle.tag.values
+      this._taggle.remove(values[values.length - 1])
+      return
+    }
+
+    // comma
+    if(/,$/.test(value)) {
+      const tag = value.replace(',', '')
+      this._taggle.add(tag)
+      this._taggleInputTarget.value = ''
+      return
+    }
+  }
+
+  _add(event) {
+    event.preventDefault()
+    this._taggle.add(this._taggleInputTarget.value)
+    this._taggleInputTarget.value = ''
+  }
+
+  onTagAdd(event, tag) {
+    if (!this.suppressEvents) {
+      const isNew = !this.options.includes(tag)
+      this.dispatchEvent(new CustomEvent("update", {
+        detail: { tag, isNew },
+        bubbles: true,
+        composed: true,
+      }));
+    }
+    this.syncValue()
+    this.checkRequired()
+    this.updateInputVisibility()
+
+    // Update autocomplete position if it's currently open
+    if (this._autocompleteContainer) {
+      // Use setTimeout to allow DOM to update first
+      setTimeout(() => this._updateAutocompletePosition(this._autocompleteContainer), 0)
+    }
+  }
+
+  onTagRemove(event, tag) {
+    if (!this.suppressEvents) {
+      this.dispatchEvent(new CustomEvent("update", {
+        detail: { tag },
+        bubbles: true,
+        composed: true,
+      }));
+    }
+    this.syncValue()
+    this.checkRequired()
+    this.updateInputVisibility()
+
+    // Update autocomplete position if it's currently open
+    if (this._autocompleteContainer) {
+      // Use setTimeout to allow DOM to update first
+      setTimeout(() => this._updateAutocompletePosition(this._autocompleteContainer), 0)
+    }
+  }
+
+  syncValue() {
+    // Directly update internals without triggering the setter
+    const values = this._taggle.getTagValues()
+    const oldValues = this._internals.value;
+    this._internals.value = values;
+
+    const formData = new FormData();
+    values.forEach(value => formData.append(this.name, value));
+    // For single mode, append empty string when no values (like standard HTML inputs)
+    // For multiple mode, leave empty (like standard HTML multiple selects)
+    if (values.length === 0 && !this.multiple) {
+      formData.append(this.name, "");
+    }
+    this._internals.setFormValue(formData);
+
+    if(this.initialized && !this.suppressEvents && JSON.stringify(oldValues) !== JSON.stringify(values)) {
+      this.dispatchEvent(new CustomEvent("change", {
+        bubbles: true,
+        composed: true,
+      }));
+    }
+  }
+
+  // Public API methods
+  add(tags) {
+    if (!this._taggle) return
+    this._taggle.add(tags)
+  }
+
+  remove(tag) {
+    if (!this._taggle) return
+    this._taggle.remove(tag)
+  }
+
+  removeAll() {
+    if (!this._taggle) return
+    this._taggle.removeAll()
+  }
+
+  has(tag) {
+    if (!this._taggle) return false
+    return this._taggle.getTagValues().includes(tag)
+  }
+
+  get tags() {
+    if (!this._taggle) return []
+    return this._taggle.getTagValues()
+  }
+
+  // Private getter for testing autocomplete suggestions
+  get _autocompleteSuggestions() {
+    if (!this.autocompleteContainerTarget) return []
+    const items = this.autocompleteContainerTarget.querySelectorAll('.ui-menu-item')
+    return Array.from(items).map(item => item.textContent.trim())
+  }
+
+  // Update autocomplete position based on current container height
+  _updateAutocompletePosition(container) {
+    if (!container) return
+
+    const inputTagRect = this.containerTarget.getBoundingClientRect();
+
+    container.style.setProperty('position', 'absolute', 'important');
+    container.style.setProperty('top', `${inputTagRect.height}px`, 'important');
+    container.style.setProperty('left', '0', 'important');
+    container.style.setProperty('right', '0', 'important');
+    container.style.setProperty('width', '100%', 'important');
+    container.style.setProperty('z-index', '1000', 'important');
+  }
+
+  updateInputVisibility() {
+    if (!this._taggleInputTarget || !this.buttonTarget) return;
+
+    const hasTags = this._taggle && this._taggle.getTagValues().length > 0;
+
+    if (this.multiple) {
+      // Multiple mode: always show input and button
+      this._taggleInputTarget.style.display = '';
+      this.buttonTarget.style.display = '';
+    } else {
+      // Single mode: hide input and button when tag exists
+      if (hasTags) {
+        this._taggleInputTarget.style.display = 'none';
+        this.buttonTarget.style.display = 'none';
+      } else {
+        this._taggleInputTarget.style.display = '';
+        this.buttonTarget.style.display = '';
+      }
+    }
+  }
+
+  addAt(tag, index) {
+    if (!this._taggle) return
+    this._taggle.add(tag, index)
+  }
+
+  disable() {
+    if (this._taggle) {
+      this._taggle.disable()
+    }
+  }
+
+  enable() {
+    if (this._taggle) {
+      this._taggle.enable()
+    }
+  }
+
+  focus() {
+    if (this._taggleInputTarget) {
+      this._taggleInputTarget.focus()
+    }
+  }
+
+  checkValidity() {
+    if (this._taggle) {
+      this.checkRequired()
+    }
+    return this._internals.checkValidity()
+  }
+
+  reportValidity() {
+    if (this._taggle) {
+      this.checkRequired()
+    }
+    return this._internals.reportValidity()
+  }
+
+  handleNameChange(newName) {
+    // Update the hidden input name to match
+    const hiddenInput = this._shadowRoot.querySelector('input[type="hidden"]');
+    if (hiddenInput) {
+      hiddenInput.name = newName || '';
+    }
+
+    // Update the form value with the new name
+    if (this._internals.value) {
+      this.value = this._internals.value; // This will recreate FormData with new name
+    }
+  }
+
+  handleMultipleChange(isMultiple) {
+    if (!this._taggle) return;
+
+    // Get current tags
+    const currentTags = this._taggle.getTagValues();
+
+    if (!isMultiple && currentTags.length > 1) {
+      // Single mode: remove excess tag-option elements from DOM
+      const tagOptions = Array.from(this.children);
+      // Keep only the first tag-option element, remove the rest
+      tagOptions.forEach((tagOption, i) => {
+        if (i > 0 && tagOption) {
+          this.removeChild(tagOption);
+        }
+      });
+    }
+
+    // Reinitialize taggle with new multiple setting
+    this.reinitializeTaggle();
+
+    // Restore tags, respecting the new multiple constraint
+    if (isMultiple) {
+      // Multiple mode: restore all remaining tags
+      if (currentTags.length > 0) {
+        this._taggle.add(currentTags);
+      }
+    } else {
+      // Single mode: keep only the first tag
+      if (currentTags.length > 0) {
+        this._taggle.add(currentTags[0]);
+      }
+    }
+
+    this.updateValue();
+    this.updateInputVisibility();
+  }
+
+  handleRequiredChange(isRequired) {
+    if (!this._taggle) return;
+
+    // Update the internal required state
+    this.required = isRequired;
+
+    // Update validation
+    this.checkRequired();
+  }
+
+  handleListChange(newListId) {
+    if (!this._taggle) return;
+
+    // Re-setup autocomplete with new datalist
+    this.setupAutocomplete();
+  }
+
+  reinitializeTaggle() {
+    // Clean up existing taggle if it exists
+    if (this._taggle && this._taggle.destroy) {
+      this._taggle.destroy();
+    }
+
+    // Get current configuration
+    const maxTags = this.hasAttribute("multiple") ? undefined : 1;
+    const placeholder = this.getAttribute("placeholder") || "";
+
+    // Create new taggle instance using original configuration pattern
+    this._taggle = new Taggle(this, {
+      inputContainer: this.containerTarget,
+      preserveCase: true,
+      hiddenInputName: this.name,
+      maxTags: maxTags,
+      placeholder: placeholder,
+      onTagAdd: (event, tag) => this.onTagAdd(event, tag),
+      onTagRemove: (event, tag) => this.onTagRemove(event, tag),
+    });
+
+    // Re-get references since taggle was recreated
+    this._taggleInputTarget = this._taggle.getInput();
+    this._taggleInputTarget.id = this.id || "";
+    this._taggleInputTarget.autocomplete = "off";
+    this._taggleInputTarget.setAttribute("data-turbo-permanent", true);
+    this._taggleInputTarget.addEventListener("keyup", e => this.keyup(e));
+
+    // Re-setup autocomplete
+    this.setupAutocomplete();
+
+    // Re-process existing tag options
+    this.processTagOptions();
+  }
+
+  updateValue() {
+    if (!this._taggle) return;
+
+    // Update the internal value to match taggle state
+    const values = this._taggle.getTagValues();
+    const oldValues = this._internals.value;
+    this._internals.value = values;
+
+    const formData = new FormData();
+    values.forEach(value => formData.append(this.name, value));
+    // For single mode, append empty string when no values (like standard HTML inputs)
+    // For multiple mode, leave empty (like standard HTML multiple selects)
+    if (values.length === 0 && !this.multiple) {
+      formData.append(this.name, "");
+    }
+    this._internals.setFormValue(formData);
+
+    // Check validity after updating
+    this.checkRequired();
+
+    if(this.initialized && !this.suppressEvents && JSON.stringify(oldValues) !== JSON.stringify(values)) {
+      this.dispatchEvent(new CustomEvent("change", {
+        bubbles: true,
+        composed: true,
+      }));
+    }
+  }
+}
+customElements.define("input-tag", InputTag);
+
+
+function h(html) {
+  const container = document.createElement("div")
+  container.innerHTML = html
+  return container.firstElementChild
+}

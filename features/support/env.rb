@@ -2,6 +2,12 @@ require "bundler/setup"
 require "capybara/cucumber"
 require "capybara/cuprite"
 require "chop"
+
+# Build input-tag JS before running tests
+require "rake"
+load File.expand_path("../../Rakefile", __dir__)
+Rake::Task["build_js"].invoke
+
 require_relative "test_app"
 require "bard/tag_field/cucumber"
 
