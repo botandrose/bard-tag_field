@@ -20,9 +20,8 @@ Capybara.register_driver :cuprite do |app|
   }
 
   # Support custom browser path for CI (e.g., Playwright's chromium)
-  if ENV["BROWSER_PATH"]
-    browser_path = Dir.glob(ENV["BROWSER_PATH"]).first
-    options[:browser_path] = browser_path if browser_path
+  if ENV["BROWSER_PATH"] && !ENV["BROWSER_PATH"].empty?
+    options[:browser_path] = ENV["BROWSER_PATH"]
   end
 
   Capybara::Cuprite::Driver.new(app, **options)

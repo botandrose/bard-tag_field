@@ -59,10 +59,16 @@ jobs:
     - name: Install Playwright Chromium for Cuprite
       run: bunx playwright install --with-deps chromium
 
+    - name: Find Chromium path
+      id: chromium
+      run: |
+        CHROME_PATH=$(find /home/runner/.cache/ms-playwright -name "chrome" -type f 2>/dev/null | head -1)
+        echo "path=$CHROME_PATH" >> $GITHUB_OUTPUT
+
     - name: Run Cucumber tests
       run: bundle exec cucumber
       env:
-        BROWSER_PATH: /home/runner/.cache/ms-playwright/chromium-*/chrome-linux/chrome
+        BROWSER_PATH: ${{ steps.chromium.outputs.path }}
 
   input-tag:
     runs-on: ubuntu-latest
