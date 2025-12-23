@@ -12,7 +12,12 @@ require_relative "test_app"
 require "bard/tag_field/cucumber"
 
 Capybara.register_driver :cuprite do |app|
-  Capybara::Cuprite::Driver.new(app, window_size: [1200, 800], headless: true)
+  Capybara::Cuprite::Driver.new(app,
+    window_size: [1200, 800],
+    headless: true,
+    process_timeout: 30,
+    timeout: 30
+  )
 end
 
 Capybara.default_driver = :cuprite
