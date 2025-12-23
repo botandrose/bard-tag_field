@@ -56,11 +56,13 @@ jobs:
     - name: Install bun dependencies
       run: cd input-tag && bun install
 
-    - name: Install Chrome for Cuprite
-      uses: browser-actions/setup-chrome@v1
+    - name: Install Playwright Chromium for Cuprite
+      run: bunx playwright install --with-deps chromium
 
     - name: Run Cucumber tests
       run: bundle exec cucumber
+      env:
+        BROWSER_PATH: /home/runner/.cache/ms-playwright/chromium-*/chrome-linux/chrome
 
   input-tag:
     runs-on: ubuntu-latest
