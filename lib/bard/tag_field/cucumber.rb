@@ -16,11 +16,22 @@ class Chop::Form::TagField < Chop::Form::Field
   end
 
   def set_value
-    if field[:multiple]
+    values = if field[:multiple]
       value.to_s.split(", ").map(&:strip)
     else
-      value.to_s.strip
+      [value.to_s.strip]
     end
+
+    # Resolve display labels to submit values using datalist
+    datalist_options = field.all("datalist option", visible: false)
+    if datalist_options.any?
+      label_to_value = datalist_options.each_with_object({}) do |opt, hash|
+        hash[opt[:innerText]] = opt[:value]
+      end
+      values = values.map { |v| label_to_value[v] || v }
+    end
+
+    field[:multiple] ? values : values.first
   end
 
   def fill_in!
