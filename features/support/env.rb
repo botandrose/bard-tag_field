@@ -15,13 +15,16 @@ Capybara.register_driver :cuprite do |app|
   options = {
     window_size: [1200, 800],
     headless: true,
-    process_timeout: 30,
+    process_timeout: 60,
     timeout: 30
   }
 
-  # Support custom browser path for CI (e.g., Playwright's chromium)
+  # Support custom browser path for CI
   if ENV["BROWSER_PATH"] && !ENV["BROWSER_PATH"].empty?
     options[:browser_path] = ENV["BROWSER_PATH"]
+  elsif ENV["CI"]
+    # On GitHub Actions, use google-chrome which is pre-installed
+    options[:browser_path] = "/usr/bin/google-chrome"
   end
 
   Capybara::Cuprite::Driver.new(app, **options)
