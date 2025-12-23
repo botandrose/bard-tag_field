@@ -1,0 +1,14 @@
+require "bundler/setup"
+require "capybara/cucumber"
+require "capybara/cuprite"
+require "chop"
+require_relative "test_app"
+require "bard/tag_field/cucumber"
+
+Capybara.register_driver :cuprite do |app|
+  Capybara::Cuprite::Driver.new(app, window_size: [1200, 800], headless: true)
+end
+
+Capybara.default_driver = :cuprite
+Capybara.javascript_driver = :cuprite
+Capybara.app = Rails.application
