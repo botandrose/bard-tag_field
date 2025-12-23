@@ -62,11 +62,20 @@ jobs:
     - name: Find Chromium path
       id: chromium
       run: |
-        CHROME_PATH=$(find /home/runner/.cache/ms-playwright -name "chrome" -type f 2>/dev/null | head -1)
+        echo "Searching for chrome binary..."
+        find /home/runner/.cache -name "chrome" -type f 2>/dev/null || echo "No chrome found in cache"
+        find ~/.cache -name "chrome" -type f 2>/dev/null || echo "No chrome found in ~/.cache"
+        CHROME_PATH=$(find /home/runner/.cache -name "chrome" -type f 2>/dev/null | head -1)
+        if [ -z "$CHROME_PATH" ]; then
+          CHROME_PATH=$(find ~/.cache -name "chrome" -type f 2>/dev/null | head -1)
+        fi
+        echo "Found: $CHROME_PATH"
         echo "path=$CHROME_PATH" >> $GITHUB_OUTPUT
 
     - name: Run Cucumber tests
-      run: bundle exec cucumber
+      run: |
+        echo "BROWSER_PATH=$BROWSER_PATH"
+        bundle exec cucumber
       env:
         BROWSER_PATH: ${{ steps.chromium.outputs.path }}
 
