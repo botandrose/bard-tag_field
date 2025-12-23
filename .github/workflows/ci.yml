@@ -1,10 +1,6 @@
 name: CI
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+on: [ push, pull_request ]
 
 jobs:
   test:
@@ -30,11 +26,8 @@ jobs:
     - name: Install Bun for asset compilation
       uses: oven-sh/setup-bun@v1
 
-    - name: Build JavaScript assets
-      run: |
-        cd input-tag
-        bun install
-        bun run build
+    - name: Install bun dependencies
+      run: cd input-tag && bun install
 
     - name: Install dependencies
       run: bundle install
@@ -42,5 +35,54 @@ jobs:
     - name: Generate appraisal gemfiles
       run: bundle exec appraisal install
 
-    - name: Run tests
+    - name: Run RSpec tests
       run: bundle exec appraisal ${{ matrix.rails-version }} rspec
+
+  cucumber:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+
+    - name: Install Bun
+      uses: oven-sh/setup-bun@v1
+
+    - name: Install bun dependencies
+      run: cd input-tag && bun install
+
+    - name: Install Chrome for Cuprite
+      uses: browser-actions/setup-chrome@v1
+
+    - name: Run Cucumber tests
+      run: bundle exec cucumber
+
+  input-tag:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    name: input-tag - ${{ matrix.browser }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Bun
+      uses: oven-sh/setup-bun@v1
+
+    - name: Install dependencies
+      run: cd input-tag && bun install
+
+    - name: Install Playwright browsers
+      run: cd input-tag && bunx playwright install --with-deps ${{ matrix.browser }}
+
+    - name: Run tests on ${{ matrix.browser }}
+      run: cd input-tag && bun run test:${{ matrix.browser }} -- --fail-only
