@@ -22,16 +22,12 @@ When "I press {string}" do |button|
   click_button button
 end
 
-Then "the submitted course_ids should be {string}" do |expected_ids|
+Then "the submitted params should be:" do |json|
   submitted = JSON.parse(find("#submitted-params").text)
-  actual_ids = submitted.dig("courses_item", "course_ids")
-  expected = expected_ids.empty? ? [] : expected_ids.split(", ")
-  expect(actual_ids).to eq(expected)
+  expect(submitted).to include(JSON.parse(json))
 end
 
-Then "the submitted tags should be {string}" do |expected_tags|
-  submitted = JSON.parse(find("#submitted-params").text)
-  actual_tags = submitted.dig("item", "tags") || []
-  expected = expected_tags.empty? ? [] : expected_tags.split(", ")
-  expect(actual_tags).to eq(expected)
+Then "the model attributes should be:" do |json|
+  model_attrs = JSON.parse(find("#model-attributes").text)
+  expect(model_attrs).to eq(JSON.parse(json))
 end

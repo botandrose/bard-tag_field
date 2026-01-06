@@ -16,7 +16,11 @@ class Item
   include ActiveModel::Model
   include ActiveModel::Attributes
 
-  attribute :tags, default: []
+  attribute :tags, default: -> { [] }
+
+  def tags=(value)
+    super Array(value).reject(&:blank?)
+  end
 
   def persisted?
     false
@@ -27,7 +31,11 @@ class CoursesItem
   include ActiveModel::Model
   include ActiveModel::Attributes
 
-  attribute :course_ids, default: []
+  attribute :course_ids, default: -> { [] }
+
+  def course_ids=(value)
+    super Array(value).reject(&:blank?)
+  end
 
   def persisted?
     false
@@ -56,12 +64,13 @@ class ItemsController < ActionController::Base
   end
 
   def create
-    @submitted_params = params.permit(item: { tags: [] }).to_h
+    @item = Item.new(params.require(:item).permit(tags: []))
     render inline: <<~ERB, layout: false
       <!DOCTYPE html>
       <html>
       <body>
-        <div id="submitted-params"><%= @submitted_params.to_json %></div>
+        <div id="submitted-params"><%= params.permit!.to_h.to_json %></div>
+        <div id="model-attributes"><%= { tags: @item.tags }.to_json %></div>
       </body>
       </html>
     ERB
@@ -97,12 +106,13 @@ class CoursesItemsController < ActionController::Base
   end
 
   def create
-    @submitted_params = params.permit(courses_item: { course_ids: [] }).to_h
+    @courses_item = CoursesItem.new(params.require(:courses_item).permit(course_ids: []))
     render inline: <<~ERB, layout: false
       <!DOCTYPE html>
       <html>
       <body>
-        <div id="submitted-params"><%= @submitted_params.to_json %></div>
+        <div id="submitted-params"><%= params.permit!.to_h.to_json %></div>
+        <div id="model-attributes"><%= { course_ids: @courses_item.course_ids }.to_json %></div>
       </body>
       </html>
     ERB
