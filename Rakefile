@@ -9,9 +9,12 @@ Cucumber::Rake::Task.new(:cucumber)
 
 task default: [:spec, :cucumber]
 
+task build: :build_js
+
 desc "Build JavaScript assets"
 task :build_js do
   sh "cd input-tag && bun run build"
+  cp "input-tag/dist/input-tag.js", "app/assets/javascripts/input-tag.js"
 end
 
 desc "Install bun dependencies"
