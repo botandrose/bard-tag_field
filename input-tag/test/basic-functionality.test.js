@@ -98,7 +98,7 @@ describe('Basic Tag Functionality', () => {
   })
 
   describe('Empty Form Serialization', () => {
-    it('should serialize empty multiple input-tag as empty array', async () => {
+    it('should serialize empty multiple input-tag with empty string so server knows to clear values', async () => {
       const form = document.createElement('form')
       form.innerHTML = `<input-tag name="tags" multiple></input-tag>`
       document.body.appendChild(form)
@@ -113,7 +113,8 @@ describe('Basic Tag Functionality', () => {
 
       const formData = new FormData(form)
       const values = formData.getAll('tags')
-      expect(values).to.deep.equal([])
+      // Should include empty string so server knows to clear values (like Rails multiple checkboxes)
+      expect(values).to.deep.equal([''])
 
       document.body.removeChild(form)
     })
@@ -138,7 +139,7 @@ describe('Basic Tag Functionality', () => {
       document.body.removeChild(form)
     })
 
-    it('should not include empty string in form data for empty multiple input-tag', async () => {
+    it('should include empty string in form data for empty multiple input-tag', async () => {
       const form = document.createElement('form')
       form.innerHTML = `<input-tag name="tags" multiple></input-tag>`
       document.body.appendChild(form)
@@ -153,7 +154,8 @@ describe('Basic Tag Functionality', () => {
 
       const formData = new FormData(form)
       const values = formData.getAll('tags')
-      expect(values).to.not.include('')
+      // Should include empty string so server knows to clear values (like Rails multiple checkboxes)
+      expect(values).to.include('')
 
       document.body.removeChild(form)
     })

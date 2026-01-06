@@ -158,6 +158,19 @@ class InputTag extends HTMLElement {
     return this._internals.form;
   }
 
+  _setFormValue(values) {
+    this._internals.value = values;
+
+    const formData = new FormData();
+    values.forEach(value => formData.append(this.name, value));
+    // Always append empty string when no values so server knows to clear the field
+    // (like Rails multiple checkboxes which prepend an empty hidden field)
+    if (values.length === 0) {
+      formData.append(this.name, "");
+    }
+    this._internals.setFormValue(formData);
+  }
+
   get name() {
     return this.getAttribute("name");
   }
@@ -187,16 +200,7 @@ class InputTag extends HTMLElement {
     }
 
     const oldValues = this._internals.value;
-    this._internals.value = values;
-
-    const formData = new FormData();
-    values.forEach(value => formData.append(this.name, value));
-    // For single mode, append empty string when no values (like standard HTML inputs)
-    // For multiple mode, leave empty (like standard HTML multiple selects)
-    if (values.length === 0 && !this.multiple) {
-      formData.append(this.name, "");
-    }
-    this._internals.setFormValue(formData);
+    this._setFormValue(values);
 
     // Update taggle to match the new values
     if (this._taggle && this.initialized) {
@@ -599,16 +603,7 @@ class InputTag extends HTMLElement {
     // Directly update internals without triggering the setter
     const values = this._taggle.getTagValues()
     const oldValues = this._internals.value;
-    this._internals.value = values;
-
-    const formData = new FormData();
-    values.forEach(value => formData.append(this.name, value));
-    // For single mode, append empty string when no values (like standard HTML inputs)
-    // For multiple mode, leave empty (like standard HTML multiple selects)
-    if (values.length === 0 && !this.multiple) {
-      formData.append(this.name, "");
-    }
-    this._internals.setFormValue(formData);
+    this._setFormValue(values);
 
     if(this.initialized && !this.suppressEvents && JSON.stringify(oldValues) !== JSON.stringify(values)) {
       this.dispatchEvent(new CustomEvent("change", {
@@ -831,16 +826,7 @@ class InputTag extends HTMLElement {
     // Update the internal value to match taggle state
     const values = this._taggle.getTagValues();
     const oldValues = this._internals.value;
-    this._internals.value = values;
-
-    const formData = new FormData();
-    values.forEach(value => formData.append(this.name, value));
-    // For single mode, append empty string when no values (like standard HTML inputs)
-    // For multiple mode, leave empty (like standard HTML multiple selects)
-    if (values.length === 0 && !this.multiple) {
-      formData.append(this.name, "");
-    }
-    this._internals.setFormValue(formData);
+    this._setFormValue(values);
 
     // Check validity after updating
     this.checkRequired();

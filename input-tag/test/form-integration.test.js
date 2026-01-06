@@ -93,7 +93,35 @@ describe('Form Integration', () => {
       const formData = new FormData(form)
       const values = formData.getAll('empty-tags')
 
-      expect(values).to.deep.equal([]) // Should be empty array for empty multiple input-tag
+      // Should include empty string so server knows to clear values (like Rails multiple checkboxes)
+      expect(values).to.deep.equal([''])
+    })
+
+    it('should send empty string when all tags are removed from multiple input-tag', async () => {
+      document.body.innerHTML = `
+        <form>
+          <input-tag name="course_ids" multiple>
+            <tag-option value="1">Course 1</tag-option>
+          </input-tag>
+        </form>
+      `
+      const form = document.querySelector('form')
+      const inputTag = document.querySelector('input-tag')
+
+      await waitForElement(inputTag, '_taggle')
+
+      // Verify initial state has the value
+      let formData = new FormData(form)
+      expect(formData.getAll('course_ids')).to.deep.equal(['1'])
+
+      // Remove all tags (simulates clicking the X button)
+      inputTag.removeAll()
+      await waitForUpdate()
+
+      // After removing all tags, FormData should still include an empty string
+      // so the server knows to clear the values (like Rails multiple checkboxes)
+      formData = new FormData(form)
+      expect(formData.getAll('course_ids')).to.deep.equal([''])
     })
 
     it('should update FormData when tags change', async () => {
