@@ -205,6 +205,76 @@ form.tag_field :tags, class: "form-control", data: { max_tags: 5 }
 form.tag_field :tags, ["ruby", "rails"], {}, { class: "form-control" }
 ```
 
+## Cucumber & Chop Integration
+
+This gem provides a [Chop](https://github.com/botandrose/chop) form field integration so that `tag_field` inputs work seamlessly with `table.fill_in!` in your Cucumber scenarios.
+
+### Setup
+
+Require the integration in your Cucumber support files:
+
+```ruby
+# features/support/env.rb
+require "chop"
+require "bard/tag_field/cucumber"
+```
+
+### Filling in Tag Fields with Chop
+
+Once loaded, `table.fill_in!` works with tag fields just like any other form field:
+
+```gherkin
+When I fill in the following:
+  | Tags | ruby, rails, javascript |
+```
+
+When the tag field has a datalist (predefined choices with display labels), Chop automatically resolves display labels to their submit values:
+
+```gherkin
+# If the datalist has options like ["English Basics", "1"], ["Algebra I", "2"]
+When I fill in the following:
+  | Courses | English Basics, Algebra I |
+# Submits values "1" and "2"
+```
+
+Unknown values are passed through as-is:
+
+```gherkin
+When I fill in the following:
+  | Courses | English Basics, Custom Course |
+# Submits "1" and "Custom Course"
+```
+
+### Additional Step Definitions
+
+The integration also provides these step definitions for more granular interaction:
+
+```gherkin
+# Type into a tag field via keyboard
+When I fill in the "Tags" tag field with "ruby"
+
+# Remove a specific tag
+When I remove "rails" from the "Tags" tag field
+
+# Assert the current tags
+Then I should see the following "Tags" tag field:
+  | ruby | rails |
+
+# Assert a tag field is empty
+Then I should see an empty "Tags" tag field
+
+# Assert available datalist options
+Then I should see the following "Courses" available tag options:
+  | English Basics |
+  | Algebra I      |
+  | World History  |
+
+# Assert visible autocomplete suggestions
+Then I should see the following "Tags" tag field autocomplete options:
+  | ruby  |
+  | rails |
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `bundle exec rspec` to run the tests.
