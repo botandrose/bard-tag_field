@@ -998,52 +998,169 @@ function autocomplete(settings) {
     };
 }
 
+const tagOptionStyleSheet = new CSSStyleSheet();
+tagOptionStyleSheet.replaceSync(`
+  :host {
+    background: #588a00;
+    padding: 3px 10px 3px 10px !important;
+    margin-right: 4px !important;
+    margin-bottom: 2px !important;
+    display: inline-flex;
+    align-items: center;
+    float: none;
+    font-size: 14px;
+    line-height: 1;
+    min-height: 32px;
+    color: #fff;
+    text-transform: none;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+  }
+  button {
+    z-index: 1;
+    border: none;
+    background: none;
+    font-size: 20px;
+    display: inline-block;
+    color: rgba(255, 255, 255, 0.6);
+    right: 10px;
+    height: 100%;
+    cursor: pointer;
+  }
+`);
+
+const inputTagStyleSheet = new CSSStyleSheet();
+inputTagStyleSheet.replaceSync(`
+  :host { display: block; }
+  :host *{
+    position: relative;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  #container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 6px 6px 3px;
+    max-height: none;
+    display: flex;
+    margin: 0;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    min-height: 48px;
+    line-height: 48px;
+    width: 100%;
+    border: 1px solid #d0d0d0;
+    outline: 1px solid transparent;
+    box-shadow: #ccc 0 1px 4px 0 inset;
+    border-radius: 2px;
+    cursor: text;
+    color: #333;
+    list-style: none;
+    padding-right: 32px;
+  }
+  input {
+    display: block;
+    height: 38px;
+    float: none;
+    margin: 0;
+    padding-left: 10px !important;
+    padding-right: 30px !important;
+    width: auto !important;
+    min-width: 70px;
+    font-size: 14px;
+    width: 100%;
+    line-height: 2;
+    padding: 0 0 0 10px;
+    border: 1px dashed #d0d0d0;
+    outline: 1px solid transparent;
+    background: #fff;
+    box-shadow: none;
+    border-radius: 2px;
+    cursor: text;
+    color: #333;
+  }
+  button {
+    width: 38px;
+    text-align: center;
+    line-height: 36px;
+    border: 1px solid #e0e0e0;
+    font-size: 20px;
+    color: #666;
+    position: absolute !important;
+    z-index: 10;
+    right: 0px;
+    top: 0;
+    font-weight: 400;
+    cursor: pointer;
+    background: none;
+  }
+  .taggle_sizer{
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    top: -500px;
+    z-index: -1;
+    visibility: hidden;
+  }
+  .ui-autocomplete{
+    position: static !important;
+    width: 100% !important;
+    margin-top: 2px;
+  }
+  .ui-menu{
+    margin: 0;
+    padding: 6px;
+    box-shadow: #ccc 0 1px 6px;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    background: #fff;
+    list-style: none;
+    font-size: 14px;
+    min-width: 200px;
+  }
+  .ui-menu .ui-menu-item{
+    display: inline-block;
+    margin: 0 0 2px;
+    line-height: 30px;
+    border: none;
+    padding: 0 10px;
+    text-indent: 0;
+    border-radius: 2px;
+    width: auto;
+    cursor: pointer;
+    color: #555;
+  }
+  .ui-menu .ui-menu-item::before{ display: none; }
+  .ui-menu .ui-menu-item:hover{ background: #e0e0e0; }
+  .ui-state-active{
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+  }
+`);
+
+
 class TagOption extends HTMLElement {
   constructor() {
     super();
     this._shadowRoot = this.attachShadow({ mode: "open" });
+    this._shadowRoot.adoptedStyleSheets = [tagOptionStyleSheet];
   }
 
   connectedCallback() {
-    this._shadowRoot.innerHTML = `
-      <style>
-        :host {
-          background: #588a00;
-          padding: 3px 10px 3px 10px !important;
-          margin-right: 4px !important;
-          margin-bottom: 2px !important;
-          display: inline-flex;
-          align-items: center;
-          float: none;
-          font-size: 14px;
-          line-height: 1;
-          min-height: 32px;
-          color: #fff;
-          text-transform: none;
-          border-radius: 3px;
-          position: relative;
-          cursor: pointer;
-        }
-        button {
-          z-index: 1;
-          border: none;
-          background: none;
-          font-size: 20px;
-          display: inline-block;
-          color: rgba(255, 255, 255, 0.6);
-          right: 10px;
-          height: 100%;
-          cursor: pointer;
-        }
-      </style>
-      <slot></slot>
-      <button type="button">×</button>
-    `;
+    this._shadowRoot.replaceChildren();
+    this._shadowRoot.appendChild(document.createElement("slot"));
 
-    this.buttonTarget = this._shadowRoot.querySelector("button");
+    this.buttonTarget = document.createElement("button");
+    this.buttonTarget.type = "button";
+    this.buttonTarget.textContent = "×";
     this.buttonTarget.onclick = event => {
       this.parentNode._taggle._remove(this, event);
     };
+    this._shadowRoot.appendChild(this.buttonTarget);
   }
 
   get value() {
@@ -1070,6 +1187,7 @@ class InputTag extends HTMLElement {
     super();
     this._internals = this.attachInternals();
     this._shadowRoot = this.attachShadow({ mode: "open" });
+    this._shadowRoot.adoptedStyleSheets = [inputTagStyleSheet];
 
     this.observer = new MutationObserver(mutations => {
       let needsTagOptionsUpdate = false;
@@ -1270,133 +1388,25 @@ class InputTag extends HTMLElement {
     // Wait for child tag-option elements to be fully connected
     await new Promise(resolve => setTimeout(resolve, 0));
 
-    this._shadowRoot.innerHTML = `
-      <style>
-        :host { display: block; }
-        :host *{
-          position: relative;
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-        #container {
-          background: rgba(255, 255, 255, 0.8);
-          padding: 6px 6px 3px;
-          max-height: none;
-          display: flex;
-          margin: 0;
-          flex-wrap: wrap;
-          align-items: flex-start;
-          min-height: 48px;
-          line-height: 48px;
-          width: 100%;
-          border: 1px solid #d0d0d0;
-          outline: 1px solid transparent;
-          box-shadow: #ccc 0 1px 4px 0 inset;
-          border-radius: 2px;
-          cursor: text;
-          color: #333;
-          list-style: none;
-          padding-right: 32px;
-        }
-        input {
-          display: block;
-          height: 38px;
-          float: none;
-          margin: 0;
-          padding-left: 10px !important;
-          padding-right: 30px !important;
-          width: auto !important;
-          min-width: 70px;
-          font-size: 14px;
-          width: 100%;
-          line-height: 2;
-          padding: 0 0 0 10px;
-          border: 1px dashed #d0d0d0;
-          outline: 1px solid transparent;
-          background: #fff;
-          box-shadow: none;
-          border-radius: 2px;
-          cursor: text;
-          color: #333;
-        }
-        button {
-          width: 38px;
-          text-align: center;
-          line-height: 36px;
-          border: 1px solid #e0e0e0;
-          font-size: 20px;
-          color: #666;
-          position: absolute !important;
-          z-index: 10;
-          right: 0px;
-          top: 0;
-          font-weight: 400;
-          cursor: pointer;
-          background: none;
-        }
-        .taggle_sizer{
-          padding: 0;
-          margin: 0;
-          position: absolute;
-          top: -500px;
-          z-index: -1;
-          visibility: hidden;
-        }
-        .ui-autocomplete{
-          position: static !important;
-          width: 100% !important;
-          margin-top: 2px;
-        }
-        .ui-menu{
-          margin: 0;
-          padding: 6px;
-          box-shadow: #ccc 0 1px 6px;
-          z-index: 2;
-          display: flex;
-          flex-wrap: wrap;
-          background: #fff;
-          list-style: none;
-          font-size: 14px;
-          min-width: 200px;
-        }
-        .ui-menu .ui-menu-item{
-          display: inline-block;
-          margin: 0 0 2px;
-          line-height: 30px;
-          border: none;
-          padding: 0 10px;
-          text-indent: 0;
-          border-radius: 2px;
-          width: auto;
-          cursor: pointer;
-          color: #555;
-        }
-        .ui-menu .ui-menu-item::before{ display: none; }
-        .ui-menu .ui-menu-item:hover{ background: #e0e0e0; }
-        .ui-state-active{
-          padding: 0;
-          border: none;
-          background: none;
-          color: inherit;
-        }
-      </style>
-      <div style="position: relative;">
-        <div id="container">
-          <slot></slot>
-        </div>
-        <input
-          id="inputTarget"
-          type="hidden"
-          name="${this.name}"
-        />
-      </div>
-    `;
+    this._shadowRoot.replaceChildren();
+
+    this._wrapperTarget = document.createElement("div");
+    this._wrapperTarget.style.position = "relative";
+
+    this.containerTarget = document.createElement("div");
+    this.containerTarget.id = "container";
+    this.containerTarget.appendChild(document.createElement("slot"));
+
+    this.inputTarget = document.createElement("input");
+    this.inputTarget.id = "inputTarget";
+    this.inputTarget.type = "hidden";
+    this.inputTarget.name = this.name || "";
+
+    this._wrapperTarget.appendChild(this.containerTarget);
+    this._wrapperTarget.appendChild(this.inputTarget);
+    this._shadowRoot.appendChild(this._wrapperTarget);
 
     this.form?.addEventListener("reset", this.reset.bind(this));
-
-    this.containerTarget = this.shadowRoot.querySelector("#container");
-    this.inputTarget = this.shadowRoot.querySelector("#inputTarget");
 
     this.required = this.hasAttribute("required");
 
@@ -1426,14 +1436,14 @@ class InputTag extends HTMLElement {
 
     this.checkRequired();
 
-    this.buttonTarget = h(`<button class="add">+</button>`);
+    this.buttonTarget = document.createElement("button");
+    this.buttonTarget.className = "add";
+    this.buttonTarget.textContent = "+";
     this.buttonTarget.addEventListener("click", e => this._add(e));
     this._taggleInputTarget.insertAdjacentElement("afterend", this.buttonTarget);
 
-    this.autocompleteContainerTarget = h(`<ul>`);
-    // Insert autocomplete container into the positioned wrapper div
-    const wrapperDiv = this.shadowRoot.querySelector('div[style*="position: relative"]');
-    wrapperDiv.appendChild(this.autocompleteContainerTarget);
+    this.autocompleteContainerTarget = document.createElement("ul");
+    this._wrapperTarget.appendChild(this.autocompleteContainerTarget);
 
     this.setupAutocomplete();
 
@@ -1460,7 +1470,13 @@ class InputTag extends HTMLElement {
         // Store the suggestions for testing (can't assign to getter, tests read from DOM)
         update(suggestions);
       },
-      render: item => h(`<li class="ui-menu-item" data-value="${item.value}">${item.label}</li>`),
+      render: item => {
+        const li = document.createElement("li");
+        li.className = "ui-menu-item";
+        li.dataset.value = item.value;
+        li.textContent = item.label;
+        return li
+      },
       onSelect: item => {
         // Prevent adding multiple tags in single mode
         if (!this.multiple && this._taggle.getTagValues().length > 0) {
@@ -1836,10 +1852,3 @@ class InputTag extends HTMLElement {
   }
 }
 customElements.define("input-tag", InputTag);
-
-
-function h(html) {
-  const container = document.createElement("div");
-  container.innerHTML = html;
-  return container.firstElementChild
-}
