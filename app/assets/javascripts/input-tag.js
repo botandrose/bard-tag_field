@@ -1455,19 +1455,16 @@ class InputTag extends HTMLElement {
   }
 
   setupAutocomplete() {
-    const optionsWithLabels = this._getOptionsWithLabels();
-
     autocomplete({
       input: this._taggleInputTarget,
       container: this.autocompleteContainerTarget,
       className: "ui-menu ui-autocomplete",
       fetch: (text, update) => {
         const currentTags = this._taggle.getTagValues();
-        const suggestions = optionsWithLabels.filter(option =>
+        const suggestions = this._getOptionsWithLabels().filter(option =>
           option.label.toLowerCase().includes(text.toLowerCase()) &&
           !currentTags.includes(option.value)
         );
-        // Store the suggestions for testing (can't assign to getter, tests read from DOM)
         update(suggestions);
       },
       render: item => {

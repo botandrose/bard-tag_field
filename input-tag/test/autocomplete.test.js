@@ -179,6 +179,27 @@ describe('Autocomplete', () => {
       expect(inputTag._autocompleteSuggestions).to.not.include('React')
       expect(inputTag._autocompleteSuggestions).to.not.include('Vue')
     })
+
+    it('should include options added to the datalist after initialization', async () => {
+      document.body.innerHTML = `
+        <input-tag name="frameworks" list="late-datalist" multiple></input-tag>
+        <datalist id="late-datalist">
+          <option value="react">React</option>
+        </datalist>
+      `
+      const inputTag = document.querySelector('input-tag')
+      const datalist = document.querySelector('#late-datalist')
+      await waitForBasicInitialization(inputTag)
+
+      const newOption = document.createElement('option')
+      newOption.value = 'added'
+      newOption.textContent = 'Added'
+      datalist.appendChild(newOption)
+
+      await simulateInput(inputTag._taggleInputTarget, 'add')
+
+      expect(inputTag._autocompleteSuggestions).to.include('Added')
+    })
   })
 
   describe('Autocomplete Selection Behavior', () => {
