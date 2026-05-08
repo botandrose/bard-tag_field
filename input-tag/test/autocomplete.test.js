@@ -7,6 +7,8 @@ import {
   waitForBasicInitialization,
   waitForUpdate,
   simulateInput,
+  simulateKeyup,
+  simulateClick,
   getTagElements,
   getTagValues
 } from './lib/test-utils.js'
@@ -631,6 +633,167 @@ describe('Autocomplete', () => {
       // Should still only have one tag (the first one)
       expect(getTagElements(inputTag)).to.have.length(1)
       expect(getTagValues(inputTag)).to.deep.equal(['option1'])
+    })
+  })
+
+  describe('Dropdown on Empty Input', () => {
+    async function setupDropdownTest() {
+      document.body.innerHTML = `
+        <input-tag name="frameworks" list="suggestions" multiple></input-tag>
+        <datalist id="suggestions">
+          <option value="react">React</option>
+          <option value="vue">Vue</option>
+          <option value="angular">Angular</option>
+        </datalist>
+      `
+      const inputTag = document.querySelector('input-tag')
+      await waitForBasicInitialization(inputTag)
+      return inputTag
+    }
+
+    it('should show all options on ArrowDown when input is empty', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      simulateKeyup(input, 40, { key: 'ArrowDown' })
+      await waitForUpdate()
+
+      expect(inputTag._autocompleteSuggestions).to.include.members(['React', 'Vue', 'Angular'])
+    })
+
+    it('should exclude already-selected tags from ArrowDown dropdown', async () => {
+      const inputTag = await setupDropdownTest()
+      inputTag.add('react')
+      await waitForUpdate()
+      const input = inputTag._taggleInputTarget
+
+      simulateKeyup(input, 40, { key: 'ArrowDown' })
+      await waitForUpdate()
+
+      expect(inputTag._autocompleteSuggestions).to.include.members(['Vue', 'Angular'])
+      expect(inputTag._autocompleteSuggestions).to.not.include('React')
+    })
+
+    it('should show down chevron on the button when input is empty', async () => {
+      const inputTag = await setupDropdownTest()
+
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+    })
+
+    it('should keep + button when there are no autocomplete options', async () => {
+      const inputTag = await setupInputTag('<input-tag name="tags" multiple></input-tag>')
+
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+    })
+
+    it('should keep + button when datalist is empty', async () => {
+      document.body.innerHTML = `
+        <input-tag name="tags" list="empty" multiple></input-tag>
+        <datalist id="empty"></datalist>
+      `
+      const inputTag = document.querySelector('input-tag')
+      await waitForBasicInitialization(inputTag)
+
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+    })
+
+    it('should swap to + when all datalist options are already selected', async () => {
+      const inputTag = await setupDropdownTest()
+
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+
+      inputTag.add('react')
+      inputTag.add('vue')
+      inputTag.add('angular')
+      await waitForUpdate()
+
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+    })
+
+    it('should close the dropdown when chevron is clicked while open', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      simulateClick(inputTag.buttonTarget)
+      await waitForUpdate()
+      expect(input.getAttribute('aria-expanded')).to.equal('true')
+
+      simulateClick(inputTag.buttonTarget)
+      await waitForUpdate()
+
+      expect(input.getAttribute('aria-expanded')).to.equal('false')
+    })
+
+    it('should swap back to chevron after removing a tag frees an option', async () => {
+      const inputTag = await setupDropdownTest()
+
+      inputTag.add('react')
+      inputTag.add('vue')
+      inputTag.add('angular')
+      await waitForUpdate()
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+
+      inputTag.remove('react')
+      await waitForUpdate()
+
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+    })
+
+    it('should show + on the button when input has text', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      await simulateInput(input, 'r')
+
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+    })
+
+    it('should swap button content as input changes', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+
+      await simulateInput(input, 'react')
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+
+      await simulateInput(input, '')
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+    })
+
+    it('should open autocomplete dropdown when chevron is clicked', async () => {
+      const inputTag = await setupDropdownTest()
+
+      simulateClick(inputTag.buttonTarget)
+      await waitForUpdate()
+
+      expect(inputTag._autocompleteSuggestions).to.include.members(['React', 'Vue', 'Angular'])
+    })
+
+    it('should still add typed text as tag when + button is clicked', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      await simulateInput(input, 'custom-tag')
+      simulateClick(inputTag.buttonTarget)
+      await waitForUpdate()
+
+      expect(getTagValues(inputTag)).to.include('custom-tag')
+      expect(input.value).to.equal('')
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
+    })
+
+    it('should show chevron again after a tag is added', async () => {
+      const inputTag = await setupDropdownTest()
+      const input = inputTag._taggleInputTarget
+
+      await simulateInput(input, 'react')
+      expect(inputTag.buttonTarget.textContent).to.equal('+')
+
+      inputTag.add('react')
+      await waitForUpdate()
+
+      expect(inputTag.buttonTarget.textContent).to.equal('▾')
     })
   })
 })

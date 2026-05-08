@@ -341,6 +341,7 @@ class InputTag extends HTMLElement {
   reset() {
     this._taggle.removeAll()
     this._taggleInputTarget.value = ''
+    this._updateButtonContent()
   }
 
   get options() {
@@ -441,10 +442,14 @@ class InputTag extends HTMLElement {
     this.checkRequired()
 
     this.buttonTarget = document.createElement("button")
+    this.buttonTarget.type = "button"
     this.buttonTarget.className = "add"
     this.buttonTarget.textContent = "+"
+    this.buttonTarget.addEventListener("mousedown", e => e.preventDefault())
     this.buttonTarget.addEventListener("click", e => this._add(e))
     this._taggleInputTarget.insertAdjacentElement("afterend", this.buttonTarget)
+
+    this._taggleInputTarget.addEventListener("input", () => this._updateButtonContent())
 
     this.autocompleteContainerTarget = document.createElement("ul");
     this._wrapperTarget.appendChild(this.autocompleteContainerTarget)
@@ -456,10 +461,11 @@ class InputTag extends HTMLElement {
 
     // Update visibility based on current state
     this.updateInputVisibility()
+    this._updateButtonContent()
   }
 
   setupAutocomplete() {
-    autocomplete({
+    this._autocompleteResult = autocomplete({
       input: this._taggleInputTarget,
       container: this.autocompleteContainerTarget,
       className: "ui-menu ui-autocomplete",
@@ -482,6 +488,7 @@ class InputTag extends HTMLElement {
         // Prevent adding multiple tags in single mode
         if (!this.multiple && this._taggle.getTagValues().length > 0) {
           this._taggleInputTarget.value = ''
+          this._updateButtonContent()
           return
         }
 
@@ -493,8 +500,9 @@ class InputTag extends HTMLElement {
 
         // Clear input
         this._taggleInputTarget.value = ''
+        this._updateButtonContent()
       },
-      minLength: 1,
+      minLength: 0,
       customize: (input, inputRect, container, maxHeight) => {
         // Position autocomplete below the input-tag container, accounting for dynamic height
         this._updateAutocompletePosition(container);
@@ -569,8 +577,35 @@ class InputTag extends HTMLElement {
 
   _add(event) {
     event.preventDefault()
-    this._taggle.add(this._taggleInputTarget.value)
+    const value = this._taggleInputTarget.value
+    if (value === '') {
+      if (this._isAutocompleteOpen()) {
+        this._closeAutocomplete()
+      } else {
+        this._taggleInputTarget.focus()
+        this._autocompleteResult.fetch()
+      }
+      return
+    }
+    this._taggle.add(value)
     this._taggleInputTarget.value = ''
+    this._updateButtonContent()
+  }
+
+  _isAutocompleteOpen() {
+    return this._taggleInputTarget.getAttribute("aria-expanded") === "true"
+  }
+
+  _closeAutocomplete() {
+    this._taggleInputTarget.setAttribute("aria-expanded", "false")
+    this.autocompleteContainerTarget.remove()
+  }
+
+  _updateButtonContent() {
+    const isEmpty = !this._taggleInputTarget.value
+    const currentTags = this._taggle.getTagValues()
+    const hasAvailableOption = this.options.some(value => !currentTags.includes(value))
+    this.buttonTarget.textContent = isEmpty && hasAvailableOption ? "▾" : "+"
   }
 
   onTagAdd(event, tag) {
@@ -585,6 +620,8 @@ class InputTag extends HTMLElement {
     this.syncValue()
     this.checkRequired()
     this.updateInputVisibility()
+    // Defer button update: taggle clears input.value after calling this callback
+    setTimeout(() => this._updateButtonContent(), 0)
 
     // Update autocomplete position if it's currently open
     if (this._autocompleteContainer) {
@@ -604,6 +641,7 @@ class InputTag extends HTMLElement {
     this.syncValue()
     this.checkRequired()
     this.updateInputVisibility()
+    this._updateButtonContent()
 
     // Update autocomplete position if it's currently open
     if (this._autocompleteContainer) {
@@ -825,9 +863,11 @@ class InputTag extends HTMLElement {
     this._taggleInputTarget.autocomplete = "off";
     this._taggleInputTarget.setAttribute("data-turbo-permanent", true);
     this._taggleInputTarget.addEventListener("keyup", e => this.keyup(e));
+    this._taggleInputTarget.addEventListener("input", () => this._updateButtonContent());
 
     // Re-setup autocomplete
     this.setupAutocomplete();
+    this._updateButtonContent();
 
     // Re-process existing tag options
     this.processTagOptions();
