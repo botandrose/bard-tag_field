@@ -1001,7 +1001,7 @@ function autocomplete(settings) {
 const tagOptionStyleSheet = new CSSStyleSheet();
 tagOptionStyleSheet.replaceSync(`
   :host {
-    background: #588a00;
+    background: var(--tag-option-bg, #588a00);
     padding: 3px 10px 3px 10px !important;
     margin-right: 4px !important;
     margin-bottom: 2px !important;
@@ -1011,7 +1011,7 @@ tagOptionStyleSheet.replaceSync(`
     font-size: 14px;
     line-height: 1;
     min-height: 32px;
-    color: #fff;
+    color: var(--tag-option-color, #fff);
     text-transform: none;
     border-radius: 3px;
     position: relative;
@@ -1023,7 +1023,7 @@ tagOptionStyleSheet.replaceSync(`
     background: none;
     font-size: 20px;
     display: inline-block;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--tag-option-button-color, rgba(255, 255, 255, 0.6));
     right: 10px;
     height: 100%;
     cursor: pointer;
@@ -1040,7 +1040,7 @@ inputTagStyleSheet.replaceSync(`
     padding: 0;
   }
   #container {
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--container-bg, rgba(255, 255, 255, 0.8));
     padding: 6px 6px 3px;
     max-height: none;
     display: flex;
@@ -1050,9 +1050,11 @@ inputTagStyleSheet.replaceSync(`
     min-height: 48px;
     line-height: 48px;
     width: 100%;
-    border: 1px solid #d0d0d0;
+    border: 1px solid var(--container-border, #d0d0d0);
+    border-left-width: var(--container-border-left-width, 1px);
+    border-left-color: var(--container-border-left-color, #d0d0d0);
     outline: 1px solid transparent;
-    box-shadow: #ccc 0 1px 4px 0 inset;
+    box-shadow: var(--container-shadow, #ccc) 0 1px 4px 0 inset;
     border-radius: 2px;
     cursor: text;
     color: #333;
@@ -1072,21 +1074,21 @@ inputTagStyleSheet.replaceSync(`
     width: 100%;
     line-height: 2;
     padding: 0 0 0 10px;
-    border: 1px dashed #d0d0d0;
+    border: 1px dashed var(--input-border, #d0d0d0);
     outline: 1px solid transparent;
-    background: #fff;
+    background: var(--input-bg, #fff);
     box-shadow: none;
     border-radius: 2px;
     cursor: text;
-    color: #333;
+    color: var(--input-color, #333);
   }
   button {
     width: 38px;
     text-align: center;
     line-height: 36px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid var(--button-border, #e0e0e0);
     font-size: 20px;
-    color: #666;
+    color: var(--button-color, #666);
     position: absolute !important;
     z-index: 10;
     right: 0px;
@@ -1111,11 +1113,11 @@ inputTagStyleSheet.replaceSync(`
   .ui-menu{
     margin: 0;
     padding: 6px;
-    box-shadow: #ccc 0 1px 6px;
+    box-shadow: var(--menu-shadow, #ccc) 0 1px 6px;
     z-index: 2;
     display: flex;
     flex-wrap: wrap;
-    background: #fff;
+    background: var(--menu-bg, #fff);
     list-style: none;
     font-size: 14px;
     min-width: 200px;
@@ -1130,10 +1132,10 @@ inputTagStyleSheet.replaceSync(`
     border-radius: 2px;
     width: auto;
     cursor: pointer;
-    color: #555;
+    color: var(--menu-color, #555);
   }
   .ui-menu .ui-menu-item::before{ display: none; }
-  .ui-menu .ui-menu-item:hover{ background: #e0e0e0; }
+  .ui-menu .ui-menu-item:hover{ background: var(--menu-hover, #e0e0e0); }
   .ui-state-active{
     padding: 0;
     border: none;

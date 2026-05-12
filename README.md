@@ -168,6 +168,63 @@ Or include the precompiled asset (automatically added by this gem):
 //= require input-tag
 ```
 
+## Styling
+
+The custom element uses Shadow DOM, so its internals can't be reached with normal selectors. Theme it by overriding these CSS custom properties on `input-tag` (or any ancestor).
+
+### Tag (`<tag-option>`)
+
+| Variable | Default | Styles |
+| --- | --- | --- |
+| `--tag-option-bg` | `#588a00` | Tag background |
+| `--tag-option-color` | `#fff` | Tag label color |
+| `--tag-option-button-color` | `rgba(255, 255, 255, 0.6)` | Tag close-button color |
+
+### Container
+
+| Variable | Default | Styles |
+| --- | --- | --- |
+| `--container-bg` | `rgba(255, 255, 255, 0.8)` | Background of the input area |
+| `--container-border` | `#d0d0d0` | Border color (all sides) |
+| `--container-border-left-width` | `1px` | Left border width (override to add a focus/error accent stripe) |
+| `--container-border-left-color` | `#d0d0d0` | Left border color |
+| `--container-shadow` | `#ccc` | Inset shadow color |
+
+### Input
+
+| Variable | Default | Styles |
+| --- | --- | --- |
+| `--input-border` | `#d0d0d0` | Dashed border around the input |
+| `--input-bg` | `#fff` | Input background |
+| `--input-color` | `#333` | Input text color |
+
+### Suggestions toggle button
+
+| Variable | Default | Styles |
+| --- | --- | --- |
+| `--button-border` | `#e0e0e0` | Button border color |
+| `--button-color` | `#666` | Caret color |
+
+### Autocomplete menu
+
+| Variable | Default | Styles |
+| --- | --- | --- |
+| `--menu-shadow` | `#ccc` | Drop shadow color |
+| `--menu-bg` | `#fff` | Menu background |
+| `--menu-color` | `#555` | Menu item text color |
+| `--menu-hover` | `#e0e0e0` | Menu item hover background |
+
+### Example
+
+```css
+input-tag {
+  --tag-option-bg: #1f6feb;
+  --container-border: #ccd;
+  --container-border-left-width: 3px;
+  --container-border-left-color: #1f6feb;
+}
+```
+
 ## Browser Support
 
 - Modern browsers that support custom elements
