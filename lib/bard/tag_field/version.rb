@@ -2,6 +2,6 @@
 
 module Bard
   module TagField
-    VERSION = "0.7.0"
+    VERSION = "0.7.1"
   end
 end
