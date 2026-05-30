@@ -65,7 +65,15 @@ class DemoController < ActionController::Base
     <head>
       <meta charset="utf-8">
       <title>bard-tag_field demo</title>
-      <script src="/input-tag.js"></script>
+      <script type="importmap">
+        {
+          "imports": {
+            "input-tag": "/input-tag/src/input-tag.js",
+            "autocompleter": "https://unpkg.com/autocompleter@9.3.2/autocomplete.es.js"
+          }
+        }
+      </script>
+      <script type="module">import "input-tag"</script>
       <style>
         body { font-family: -apple-system, system-ui, sans-serif; max-width: 820px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #222; }
         h1 { color: #2c3e50; }
@@ -141,8 +149,11 @@ class DemoController < ActionController::Base
 end
 
 class AssetsController < ActionController::Base
-  def input_tag_js
-    path = File.expand_path("app/assets/javascripts/input-tag.js", __dir__)
+  # Serve input-tag straight from source (no build step) so edits show up on reload.
+  def source
+    name = File.basename(params[:path])
+    path = File.expand_path("input-tag/src/#{name}", __dir__)
+    response.headers["Cache-Control"] = "no-store"
     send_file path, type: "application/javascript", disposition: "inline"
   end
 end
@@ -152,7 +163,7 @@ DemoApp.initialize!
 Rails.application.routes.draw do
   root "demo#index"
   post "/", to: "demo#create"
-  get "/input-tag.js", to: "assets#input_tag_js"
+  get "/input-tag/src/*path", to: "assets#source", format: false
 end
 
 run Rails.application

@@ -338,6 +338,10 @@ After checking out the repo, run `bin/setup` to install dependencies. Then, run 
 
 To install this gem onto your local machine, run `bundle exec rake install`.
 
+### Working on the tag styling
+
+The styles live in `input-tag/src/input-tag.js`. Edit that file and reload <http://bard-tag_field.localhost/> — your changes are there. No build, no restart.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/botandrose/bard-tag_field.
