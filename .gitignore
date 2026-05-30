@@ -6,6 +6,8 @@
 /coverage/
 /doc/
 /pkg/
+/public/*
+!/public/.keep
 /spec/reports/
 /tmp/
 .ruby-version
