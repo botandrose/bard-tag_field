@@ -21,3 +21,7 @@ desc "Install bun dependencies"
 task :install_deps do
   sh "cd input-tag && bun install"
 end
+
+task :restart do
+  touch "tmp/restart.txt"
+end

@@ -9,7 +9,8 @@
 /public/*
 !/public/.keep
 /spec/reports/
-/tmp/
+/tmp/*
+!/tmp/.keep
 .ruby-version
 .ruby-gemset
 .byebug_history
