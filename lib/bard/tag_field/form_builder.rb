@@ -11,14 +11,13 @@ module Bard
           html_options = options
           options = choices
           choices = nil
-        when Array
-          # tag_field(:method, choices_array, { class: "form-control" })
-          html_options = options if options.is_a?(Hash)
         when NilClass
           # tag_field(:method)
           html_options = options
           options = {}
         end
+        # Array: choices/options/html_options are already correctly positioned;
+        # both options and html_options are merged below, matching Rails' select.
 
         # Merge options and html_options for Rails compatibility
         merged_options = objectify_options(options.merge(html_options))

@@ -289,6 +289,17 @@ RSpec.describe "form.tag_field" do
             </input-tag>
           HTML
         end
+
+        it "accepts choices with the 4-arg options/html_options signature" do
+          expect(form_builder.tag_field(:tags, choices, {}, { class: "form-control" })).to match_html(<<~HTML)
+            <input-tag name="test_model[tags]" id="test_model_tags" class="form-control">
+              <datalist>
+                <option value="ruby">Ruby</option>
+                <option value="rails">Rails</option>
+              </datalist>
+            </input-tag>
+          HTML
+        end
       end
 
       context "with empty choices" do
