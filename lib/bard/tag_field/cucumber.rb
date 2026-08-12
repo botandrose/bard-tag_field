@@ -8,7 +8,7 @@ class Chop::Form::TagField < Chop::Form::Field
   end
 
   def get_value
-    field.all("tag-option").map(&:text)
+    field.all("tag-option", minimum: 0).map(&:text)
   end
 
   def diff_value
