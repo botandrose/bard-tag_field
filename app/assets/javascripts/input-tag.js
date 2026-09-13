@@ -1284,7 +1284,9 @@ class InputTag extends HTMLElement {
     if (values.length === 0) {
       formData.append(this.name, "");
     }
-    this._internals.setFormValue(formData);
+    // State is a JSON string, not the FormData: Firefox flattens a FormData to {} in the
+    // session store and restores it as "[object Object]", but a string survives intact.
+    this._internals.setFormValue(formData, JSON.stringify(values));
   }
 
   get name() {
@@ -1340,6 +1342,29 @@ class InputTag extends HTMLElement {
     this._taggle.removeAll();
     this._taggleInputTarget.value = '';
     this._updateButtonContent();
+  }
+
+  // On session restore Firefox hands back the state we saved (a JSON string of tag values).
+  // Rebuild the tags from it so they survive a browser restart; before taggle is ready, stash
+  // them for connectedCallback, and fall back to the current tags if the state is malformed.
+  formStateRestoreCallback(state) {
+    const values = this._restoredValues(state);
+    if (values) {
+      if (this._taggle && this.initialized) this.value = values;
+      else this._pendingRestoredValues = values;
+    } else {
+      this._setFormValue(this._taggle ? this._taggle.getTagValues() : []);
+    }
+  }
+
+  _restoredValues(state) {
+    if (typeof state !== "string") return null
+    try {
+      const values = JSON.parse(state);
+      return Array.isArray(values) ? values : null
+    } catch {
+      return null
+    }
   }
 
   get options() {
@@ -1434,7 +1459,13 @@ class InputTag extends HTMLElement {
     this._taggleInputTarget.setAttribute("data-turbo-permanent", true);
     this._taggleInputTarget.addEventListener("keyup", e => this.keyup(e));
 
-    // Set initial value after taggle is initialized
+    // Set initial value after taggle is initialized. A session restore that arrived before
+    // taggle was ready is applied here, so its tags and submission value both come back.
+    if (this._pendingRestoredValues) {
+      const restored = this._pendingRestoredValues;
+      this._pendingRestoredValues = null;
+      if (restored.length > 0) this._taggle.add(restored);
+    }
     this.value = this._taggle.getTagValues();
 
     this.checkRequired();
