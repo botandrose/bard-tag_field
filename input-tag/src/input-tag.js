@@ -343,7 +343,7 @@ class InputTag extends HTMLElement {
   }
 
   reset() {
-    this._taggle.removeAll()
+    this.value = this._defaultValues
     this._taggleInputTarget.value = ''
     this._updateButtonContent()
   }
@@ -438,7 +438,8 @@ class InputTag extends HTMLElement {
     this._wrapperTarget.appendChild(this.inputTarget);
     this._shadowRoot.appendChild(this._wrapperTarget);
 
-    this.form?.addEventListener("reset", this.reset.bind(this));
+    this._onReset = () => this.reset()
+    this.form?.addEventListener("reset", this._onReset);
 
     this.required = this.hasAttribute("required")
 
@@ -458,6 +459,7 @@ class InputTag extends HTMLElement {
       onTagRemove: (event, tag) => this.onTagRemove(event, tag),
     })
     this._taggleInputTarget = this._taggle.getInput()
+    this._defaultValues = this._taggle.getTagValues()
     this._taggleInputTarget.id = this.id
     this._taggleInputTarget.autocomplete = "off"
     this._taggleInputTarget.setAttribute("data-turbo-permanent", true)
@@ -547,7 +549,7 @@ class InputTag extends HTMLElement {
   }
 
   disconnectedCallback() {
-    this.form?.removeEventListener("reset", this.reset.bind(this));
+    this.form?.removeEventListener("reset", this._onReset);
     this.unobserve();
   }
 

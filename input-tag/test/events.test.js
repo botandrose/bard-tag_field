@@ -416,10 +416,12 @@ describe('Events', () => {
       await waitForUpdate()
 
       // Should still work
+      inputTag.add('added')
+      await waitForUpdate()
       form.reset()
       await waitForUpdate()
 
-      expect(getTagElements(inputTag)).to.have.length(0)
+      expect(getTagValues(inputTag)).to.deep.equal(['test'])
     })
   })
 })

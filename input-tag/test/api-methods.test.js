@@ -62,7 +62,7 @@ describe('API Methods', () => {
   })
 
   describe('Reset Method', () => {
-    it('should clear all tags when reset() is called', async () => {
+    it('should restore the initial tags when reset() is called', async () => {
       const inputTag = await setupInputTag(`
         <input-tag name="tags" multiple>
           <tag-option value="tag1">Tag 1</tag-option>
@@ -71,13 +71,16 @@ describe('API Methods', () => {
         </input-tag>
       `)
 
-      expect(getTagElements(inputTag)).to.have.length(3)
+      inputTag.remove('tag1')
+      inputTag.add('tag4')
+      await waitForUpdate()
+
+      expect(getTagValues(inputTag)).to.deep.equal(['tag2', 'tag3', 'tag4'])
 
       inputTag.reset()
       await waitForUpdate()
 
-      expect(getTagElements(inputTag)).to.have.length(0)
-      expect(getTagValues(inputTag)).to.deep.equal([])
+      expect(getTagValues(inputTag)).to.deep.equal(['tag1', 'tag2', 'tag3'])
     })
 
     it('should clear input field when reset() is called', async () => {
@@ -113,7 +116,7 @@ describe('API Methods', () => {
       inputTag.reset()
       await waitForUpdate()
 
-      expect(getTagElements(inputTag)).to.have.length(0)
+      expect(getTagValues(inputTag)).to.deep.equal(['test'])
     })
 
     it('should allow adding tags after reset', async () => {
@@ -129,8 +132,7 @@ describe('API Methods', () => {
       inputTag.add('after-reset')
       await waitForUpdate()
 
-      expect(getTagElements(inputTag)).to.have.length(1)
-      expect(getTagValues(inputTag)).to.deep.equal(['after-reset'])
+      expect(getTagValues(inputTag)).to.deep.equal(['original', 'after-reset'])
     })
   })
 

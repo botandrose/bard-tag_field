@@ -269,11 +269,11 @@ describe('Form Integration', () => {
   })
 
   describe('Form Reset Behavior', () => {
-    it('should clear all tags when form is reset', async () => {
+    it('should restore the initial tags when form is reset', async () => {
       document.body.innerHTML = `
         <form>
           <input-tag name="reset-tags" multiple>
-            <tag-option value="will-be-cleared">Will Be Cleared</tag-option>
+            <tag-option value="initial">Initial</tag-option>
           </input-tag>
         </form>
       `
@@ -282,13 +282,41 @@ describe('Form Integration', () => {
 
       await waitForElement(inputTag, '_taggle')
 
+      inputTag.remove('initial')
+      inputTag.add('added')
+      await waitForUpdate()
+
+      expect(getTagValues(inputTag)).to.deep.equal(['added'])
+
+      form.reset()
+      await waitForUpdate()
+
+      expect(getTagValues(inputTag)).to.deep.equal(['initial'])
+      expect(inputTag.value).to.deep.equal(['initial'])
+      expect(new FormData(form).getAll('reset-tags')).to.deep.equal(['initial'])
+    })
+
+    it('should clear all tags when form is reset and none were initial', async () => {
+      document.body.innerHTML = `
+        <form>
+          <input-tag name="reset-tags" multiple></input-tag>
+        </form>
+      `
+      const form = document.querySelector('form')
+      const inputTag = document.querySelector('input-tag')
+
+      await waitForElement(inputTag, '_taggle')
+
+      inputTag.add('added')
+      await waitForUpdate()
+
       expect(getTagElements(inputTag)).to.have.length(1)
 
       form.reset()
       await waitForUpdate()
 
       expect(getTagElements(inputTag)).to.have.length(0)
-      expect(inputTag.tags).to.deep.equal([])
+      expect(inputTag.value).to.deep.equal([])
     })
 
     it('should clear input field when form is reset', async () => {
@@ -329,14 +357,15 @@ describe('Form Integration', () => {
       await waitForElement(inputTag1, '_taggle')
       await waitForElement(inputTag2, '_taggle')
 
-      expect(getTagElements(inputTag1)).to.have.length(1)
-      expect(getTagElements(inputTag2)).to.have.length(1)
+      inputTag1.add('extra1')
+      inputTag2.remove('tag2')
+      await waitForUpdate()
 
       form.reset()
       await waitForUpdate()
 
-      expect(getTagElements(inputTag1)).to.have.length(0)
-      expect(getTagElements(inputTag2)).to.have.length(0)
+      expect(getTagValues(inputTag1)).to.deep.equal(['tag1'])
+      expect(getTagValues(inputTag2)).to.deep.equal(['tag2'])
     })
   })
 
