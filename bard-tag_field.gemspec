@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description  = "form.tag_field using @botandrose/input-tag custom element"
   spec.homepage = "https://github.com/botandrose/bard-tag_field"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -29,7 +29,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 7.1"
+  spec.add_dependency "rails", ">= 7.2"
 
   spec.add_development_dependency "rspec-rails"
   spec.add_development_dependency "equivalent-xml"

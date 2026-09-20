@@ -1,8 +1,8 @@
 # Bard::TagField
 
 [![CI Status](https://github.com/botandrose/bard-tag_field/workflows/CI/badge.svg)](https://github.com/botandrose/bard-tag_field/actions)
-[![Ruby](https://img.shields.io/badge/ruby-3.2%2B-red)](https://www.ruby-lang.org)
-[![Rails](https://img.shields.io/badge/rails-7.1%2B-red)](https://rubyonrails.org)
+[![Ruby](https://img.shields.io/badge/ruby-3.3%2B-red)](https://www.ruby-lang.org)
+[![Rails](https://img.shields.io/badge/rails-7.2%2B-red)](https://rubyonrails.org)
 
 A Rails form helper gem that adds `tag_field` to your forms, creating interactive tag input fields using the [@botandrose/input-tag](https://github.com/botandrose/input-tag) custom element.
 
@@ -16,7 +16,7 @@ Perfect for adding tag functionality to your Rails forms with a clean, modern in
 - 🛡️ **Secure** - Automatic HTML escaping prevents XSS attacks
 - 🧪 **Well-tested** - Comprehensive test suite
 - ⚡ **Modern** - Built with custom web elements
-- 🔄 **Compatible** - Supports Ruby 3.2+ and Rails 7.1+
+- 🔄 **Compatible** - Supports Ruby 3.3+ (including 4.0) and Rails 7.2+ (including 8.1)
 
 ## Usage
 
@@ -93,7 +93,7 @@ Use blocks for custom tag rendering:
 
 Your model should handle tags as an array. Here are common approaches:
 
-### With Array Attribute (Rails 5+)
+### With Array Attribute
 
 ```ruby
 class Post < ApplicationRecord
@@ -229,7 +229,6 @@ input-tag {
 
 - Modern browsers that support custom elements
 - Graceful degradation for older browsers
-- Supports Ruby 3.2+ and Rails 7.1+ (including Rails 8.0)
 
 ## API Reference
 

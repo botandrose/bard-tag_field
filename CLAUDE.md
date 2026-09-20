@@ -21,9 +21,9 @@ This is a Rails form helper gem that provides `tag_field` for creating interacti
 bundle exec rspec
 
 # Run tests for specific Rails version
-bundle exec appraisal rails-7.1 rspec
 bundle exec appraisal rails-7.2 rspec
 bundle exec appraisal rails-8.0 rspec
+bundle exec appraisal rails-8.1 rspec
 
 # Generate appraisal gemfiles after updating Appraisals
 bundle exec appraisal install
@@ -107,4 +107,4 @@ The `input-tag/` directory contains the standalone @botandrose/input-tag custom 
 
 ## Multi-Rails Version Support
 
-Uses Appraisal gem to test against Rails 7.1, 7.2, and 8.0. Gemfiles are in `gemfiles/` directory. CI tests all combinations of Ruby 3.2/3.3/3.4 with each Rails version.
+Uses Appraisal gem to test against Rails 7.2, 8.0, and 8.1. Gemfiles are in `gemfiles/` directory. CI tests all combinations of Ruby 3.3/3.4/4.0 with each Rails version.

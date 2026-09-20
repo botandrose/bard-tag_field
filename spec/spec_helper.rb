@@ -5,7 +5,6 @@ require "action_view"
 require "active_model"
 require "bard/tag_field"
 require "equivalent-xml"
-require "ostruct"
 require "rspec/matchers"
 
 # Mock Rails application for testing
@@ -34,7 +33,6 @@ RSpec.configure do |config|
   # Helper method for creating form builder instances
   config.before(:each) do
     @template = ActionView::Base.new(ActionView::LookupContext.new([]), {}, nil)
-    @object = OpenStruct.new
   end
 end
 
